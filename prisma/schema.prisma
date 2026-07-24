@@ -1,0 +1,136 @@
+// AtliQ Sales Memory Assistant — database schema
+// Deal = the CRM record (system of record for the prototype, seeded from crm_export.csv).
+// SourceEvent = a raw email or meeting note, kept for citation/timeline purposes.
+// Signal = one extracted, proposed change from a SourceEvent — this IS the Approval Queue.
+//   Its `tier` decides whether it auto-applies, waits for approval, or gets tagged Needs Review.
+// AuditLog = who/what/when for every automatic or approved action, per the Accountability guardrail.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DealStage {
+  New
+  Contacted
+  Qualified
+  ProposalSent
+  Negotiation
+  ComplianceProcurement
+  VerbalAgreement
+  Won
+  Lost
+}
+
+enum SourceType {
+  email
+  meeting_note
+  founder_reply // a reply to a reminder/digest item - FR-11, treated like any inbound signal
+}
+
+enum SignalType {
+  new_lead
+  deadline
+  negotiation_flag
+  deferral
+  stage_change
+  cross_sell
+  disqualification
+  owner_assignment
+  duplicate_merge
+  deferral_reminder // FR-8: fires when a deferral's resurfacing date actually arrives
+}
+
+enum SignalTier {
+  auto_apply
+  approval_required
+  needs_review
+}
+
+enum SignalStatus {
+  pending
+  approved
+  rejected
+  auto_applied
+  needs_review
+  edited
+}
+
+model Deal {
+  id               String    @id @default(cuid())
+  leadId           String    @unique // original lead_id from crm_export.csv, e.g. L-1003
+  company          String
+  contactName      String?
+  contactEmail     String?
+  source           String?
+  serviceInterest  String?
+  stage            DealStage @default(New) // AI-owned field - replaces the CRM's manual status field (FR-4/FR-5)
+  estValueUsd      Float?
+  owner            String?
+  createdDate      DateTime?
+  lastContactDate  DateTime?
+  nextFollowupDate DateTime?
+  notes            String? // original free-text notes field from the CRM export
+  stale            Boolean   @default(false) // 30-day no-activity flag, separate from stage and from Lost
+  staleSince       DateTime?
+  mergedIntoDealId String? // if this record was merged into another (duplicate), points at the surviving record
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sourceEvents SourceEvent[]
+  signals      Signal[]
+  auditLogs    AuditLog[]
+}
+
+model SourceEvent {
+  id          String     @id @default(cuid())
+  dealId      String?
+  deal        Deal?      @relation(fields: [dealId], references: [id])
+  type        SourceType
+  filename    String? // original file name from the dataset, e.g. "emails/2026-06-16_meridian.md" - used as the citation
+  occurredAt  DateTime?
+  fromWhom    String?
+  subject     String?
+  body        String
+  processedAt DateTime?
+  createdAt   DateTime   @default(now())
+
+  signals Signal[]
+}
+
+model Signal {
+  id            String       @id @default(cuid())
+  sourceEventId String
+  sourceEvent   SourceEvent  @relation(fields: [sourceEventId], references: [id])
+  dealId        String?
+  deal          Deal?        @relation(fields: [dealId], references: [id])
+  type          SignalType
+  field         String? // CRM field affected, if any (e.g. "stage", "owner", "next_followup_date")
+  proposedValue String? // JSON-stringified proposed value
+  previousValue String? // JSON-stringified prior value, for audit/diff display
+  citationQuote String // exact source line the signal was extracted from
+  confidence    String       @default("high") // "high" | "low" - low confidence = ambiguous source note (FR-6)
+  tier          SignalTier
+  status        SignalStatus @default(pending)
+  reasoning     String? // one-line rationale shown to the founder in the Approval Inbox
+  suggestedServiceLine String? // FR-9: only for cross_sell signals - the AtliQ service line the model thinks fits
+  leadSource           String? // only for new_lead signals - drives FR-12's New-vs-Qualified decision on approval
+  createdAt     DateTime     @default(now())
+  resolvedAt    DateTime?
+  resolvedBy    String?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  dealId    String?
+  deal      Deal?    @relation(fields: [dealId], references: [id])
+  action    String // e.g. "owner_assigned", "stage_auto_applied", "duplicate_merged", "approval_approved", "approval_rejected"
+  detail    String
+  actor     String // "AI" or a founder's name
+  createdAt DateTime @default(now())
+}
