@@ -108,7 +108,7 @@ function EventCard({
             <span
               key={s.id}
               title={s.citationQuote}
-              className="rounded bg-blue-50 px-2 py-0.5 text-xs text-accent"
+              className="rounded bg-forest-50 px-2 py-0.5 text-xs text-accent"
             >
               {s.type.replace(/_/g, " ")} · {s.status.replace(/_/g, " ")}
             </span>

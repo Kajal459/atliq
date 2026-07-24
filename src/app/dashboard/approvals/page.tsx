@@ -131,7 +131,7 @@ function ApprovalCard({
             type="submit"
             name="action"
             value="reject"
-            className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
           >
             Reject
           </button>
@@ -139,7 +139,7 @@ function ApprovalCard({
             type="submit"
             name="action"
             value="edit"
-            className="rounded border border-accent px-3 py-1.5 text-xs font-medium text-accent hover:bg-blue-50"
+            className="rounded-full border border-forest-600 px-3 py-1.5 text-xs font-medium text-forest-600 hover:bg-forest-50"
           >
             Edit &amp; Approve
           </button>
@@ -147,7 +147,7 @@ function ApprovalCard({
             type="submit"
             name="action"
             value="approve"
-            className="rounded bg-good px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+            className="rounded-full bg-forest-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-forest-700"
           >
             Approve
           </button>

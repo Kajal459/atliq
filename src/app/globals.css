@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 body {
-  color: #1a1a2e;
-  background: #fafafa;
+  color: #1a2e26;
+  background: #fdf6ef;
+}
+
+h1 {
+  font-family: var(--font-voice), Georgia, serif;
 }
