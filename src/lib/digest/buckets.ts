@@ -14,9 +14,20 @@ export interface DigestItem {
   reason: string;
   dueDate: Date | null;
   bucket: DigestBucket;
+  estValueUsd: number | null;
 }
 
-export async function buildWeeklyDigest(now: Date = new Date()): Promise<Record<DigestBucket, DigestItem[]>> {
+export interface DigestSummary {
+  buckets: Record<DigestBucket, DigestItem[]>;
+  // "At risk" = today/overdue + stale + needs-review - the deals where
+  // process failure (not fit or budget) is actively threatening the deal
+  // right now, which is exactly what the North Star metric tracks.
+  atRiskValueUsd: number;
+  atRiskDealCount: number;
+  totalOpenPipelineValueUsd: number;
+}
+
+export async function buildWeeklyDigest(now: Date = new Date()): Promise<DigestSummary> {
   const in2Weeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000);
@@ -33,6 +44,8 @@ export async function buildWeeklyDigest(now: Date = new Date()): Promise<Record<
     needsReview: [],
   };
 
+  const totalOpenPipelineValueUsd = deals.reduce((sum, d) => sum + (d.estValueUsd ?? 0), 0);
+
   for (const deal of deals) {
     if (deal.stale) {
       result.stale.push({
@@ -42,6 +55,7 @@ export async function buildWeeklyDigest(now: Date = new Date()): Promise<Record<
         reason: `No activity since ${deal.staleSince?.toISOString().slice(0, 10) ?? "unknown"} (30+ days)`,
         dueDate: deal.staleSince,
         bucket: "stale",
+        estValueUsd: deal.estValueUsd,
       });
       continue;
     }
@@ -62,6 +76,7 @@ export async function buildWeeklyDigest(now: Date = new Date()): Promise<Record<
         reason: `Follow-up due ${due.toISOString().slice(0, 10)}`,
         dueDate: due,
         bucket,
+        estValueUsd: deal.estValueUsd,
       });
     }
   }
@@ -80,8 +95,25 @@ export async function buildWeeklyDigest(now: Date = new Date()): Promise<Record<
       reason: `${s.type.replace("_", " ")}: "${s.citationQuote}"`,
       dueDate: null,
       bucket: "needsReview",
+      estValueUsd: s.deal.estValueUsd,
     });
   }
 
-  return result;
+  // "At risk" = deals showing up in today/overdue, stale, or needs-review -
+  // deduplicated, since a deal could theoretically land in more than one.
+  const atRiskDealIds = new Set([
+    ...result.today.map((i) => i.dealId),
+    ...result.stale.map((i) => i.dealId),
+    ...result.needsReview.map((i) => i.dealId),
+  ]);
+  const atRiskValueUsd = deals
+    .filter((d) => atRiskDealIds.has(d.id))
+    .reduce((sum, d) => sum + (d.estValueUsd ?? 0), 0);
+
+  return {
+    buckets: result,
+    atRiskValueUsd,
+    atRiskDealCount: atRiskDealIds.size,
+    totalOpenPipelineValueUsd,
+  };
 }

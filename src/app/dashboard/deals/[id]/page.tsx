@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { HandoffBriefButton } from "../../_components/HandoffBriefButton";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,9 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
           <Field label="Created" value={deal.createdDate?.toISOString().slice(0, 10) ?? "-"} />
           <Field label="Last contact" value={deal.lastContactDate?.toISOString().slice(0, 10) ?? "-"} />
         </dl>
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <HandoffBriefButton scope="deal" dealId={deal.id} label="Generate handoff brief" />
+        </div>
       </div>
 
       <div>
