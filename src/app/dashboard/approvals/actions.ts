@@ -16,4 +16,6 @@ export async function submitApproval(formData: FormData) {
   await resolveApproval(signalId, action, actor, editedValue ? String(editedValue) : undefined);
   revalidatePath("/dashboard/approvals");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/digest");
+  revalidatePath("/dashboard/deals");
 }

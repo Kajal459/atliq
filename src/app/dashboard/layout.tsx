@@ -10,6 +10,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-serif text-2xl italic text-forest-600">atliq</span>
             <nav className="flex gap-6 text-sm text-gray-600">
               <Link href="/dashboard" className="hover:text-forest-600">
+                Home
+              </Link>
+              <Link href="/dashboard/digest" className="hover:text-forest-600">
                 Weekly Digest
               </Link>
               <Link href="/dashboard/approvals" className="hover:text-forest-600">
