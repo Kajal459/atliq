@@ -36,7 +36,7 @@ export default async function DashboardHomePage() {
       </div>
 
       {o.needsReviewCount > 0 && (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        <p className="rounded-lg border border-amber-300 bg-amber-100 px-4 py-2 text-sm text-amber-900">
           {o.needsReviewCount} deal{o.needsReviewCount === 1 ? "" : "s"} moved backward and need a look - see the{" "}
           <Link href="/dashboard/digest" className="font-medium underline">
             Weekly Digest
@@ -129,12 +129,14 @@ function KpiCard({
   return (
     <div
       className={`h-full rounded-xl border p-4 ${
-        highlight ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-white"
+        highlight ? "border-amber-300 bg-amber-100" : "border-gray-200 bg-white"
       }`}
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 font-serif text-2xl text-ink">{value}</p>
-      <p className="mt-0.5 text-xs text-gray-500">{sub}</p>
+      <p className={`text-xs font-medium uppercase tracking-wide ${highlight ? "text-amber-700" : "text-gray-500"}`}>
+        {label}
+      </p>
+      <p className={`mt-1 font-serif text-2xl ${highlight ? "text-amber-900" : "text-ink"}`}>{value}</p>
+      <p className={`mt-0.5 text-xs ${highlight ? "text-amber-700" : "text-gray-500"}`}>{sub}</p>
     </div>
   );
 }

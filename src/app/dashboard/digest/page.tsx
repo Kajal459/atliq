@@ -36,17 +36,17 @@ export default async function WeeklyDigestPage() {
       </div>
 
       {digest.atRiskDealCount > 0 && (
-        <div className="rounded-2xl border border-forest-100 bg-forest-50 p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-forest-600">
+        <div className="rounded-2xl bg-forest-700 p-5 text-white">
+          <p className="text-xs font-medium uppercase tracking-wide text-forest-100">
             Pipeline value at risk this week
           </p>
-          <p className="mt-1 font-serif text-3xl text-forest-900">
+          <p className="mt-1 font-serif text-3xl">
             {formatUsd(digest.atRiskValueUsd)}{" "}
-            <span className="text-lg text-gray-500">
+            <span className="text-lg text-forest-100">
               across {digest.atRiskDealCount} deal{digest.atRiskDealCount === 1 ? "" : "s"}
             </span>
           </p>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-forest-50">
             Overdue, stale, or flagged for review right now - not a fit or budget problem, a process one.{" "}
             {digest.totalOpenPipelineValueUsd > 0 && (
               <>That&apos;s {Math.round((digest.atRiskValueUsd / digest.totalOpenPipelineValueUsd) * 100)}% of the {formatUsd(digest.totalOpenPipelineValueUsd)} open pipeline.</>
