@@ -37,14 +37,23 @@ export default async function ApprovalInboxPage() {
           new leads and due reminders - come first.
         </p>
         {signals.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full bg-forest-600 px-3 py-1 font-medium text-white">
-              {signals.length} waiting
-            </span>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs" id="type-filters">
+            <button
+              type="button"
+              data-filter="all"
+              className="filter-pill rounded-full bg-forest-600 px-3 py-1 font-medium text-white"
+            >
+              All ({signals.length})
+            </button>
             {Object.entries(counts).map(([type, count]) => (
-              <span key={type} className="rounded-full border border-gray-200 bg-white px-3 py-1 text-gray-600">
+              <button
+                key={type}
+                type="button"
+                data-filter={type}
+                className="filter-pill rounded-full border border-gray-200 bg-white px-3 py-1 text-gray-600"
+              >
                 {SIGNAL_TYPE_META[type]?.icon ?? "•"} {count} {SIGNAL_TYPE_META[type]?.label.toLowerCase() ?? type}
-              </span>
+              </button>
             ))}
           </div>
         )}
@@ -56,17 +65,23 @@ export default async function ApprovalInboxPage() {
         </p>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-3" id="approval-list">
         {signals.map((signal) => (
           <ApprovalCard key={signal.id} signal={signal} />
         ))}
       </div>
 
-      {/* Remembers "Acting as" in this browser so it isn't re-picked on every single approval. */}
+      {signals.length > 0 && (
+        <p id="no-match" className="hidden rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">
+          Nothing waiting in this filter right now.
+        </p>
+      )}
+
       <script
         dangerouslySetInnerHTML={{
           __html: `
             (function () {
+              // Remembers "Acting as" in this browser so it isn't re-picked on every single approval.
               var KEY = "atliq-actor";
               var saved = localStorage.getItem(KEY);
               var selects = document.querySelectorAll('select[name="actor"]');
@@ -76,6 +91,32 @@ export default async function ApprovalInboxPage() {
                   localStorage.setItem(KEY, s.value);
                   selects.forEach(function (other) { other.value = s.value; });
                 });
+              });
+
+              // Type filter pills - client-side show/hide, no reload.
+              var pills = document.querySelectorAll(".filter-pill");
+              var cards = document.querySelectorAll("#approval-list [data-signal-type]");
+              var noMatch = document.getElementById("no-match");
+              function activate(type) {
+                var visible = 0;
+                cards.forEach(function (card) {
+                  var match = type === "all" || card.getAttribute("data-signal-type") === type;
+                  card.style.display = match ? "" : "none";
+                  if (match) visible++;
+                });
+                if (noMatch) noMatch.classList.toggle("hidden", visible !== 0);
+                pills.forEach(function (p) {
+                  var isActive = p.getAttribute("data-filter") === type;
+                  p.classList.toggle("bg-forest-600", isActive);
+                  p.classList.toggle("text-white", isActive);
+                  p.classList.toggle("border-transparent", isActive);
+                  p.classList.toggle("bg-white", !isActive);
+                  p.classList.toggle("border-gray-200", !isActive);
+                  p.classList.toggle("text-gray-600", !isActive);
+                });
+              }
+              pills.forEach(function (p) {
+                p.addEventListener("click", function () { activate(p.getAttribute("data-filter")); });
               });
             })();
           `,
@@ -91,7 +132,11 @@ function ApprovalCard({ signal }: { signal: SignalWithRelations }) {
   const hasEditableDraft = !signal.field && signal.type === "deferral_reminder" && Boolean(signal.proposedValue);
 
   return (
-    <form action={submitApproval} className="rounded-xl border border-gray-200 bg-white p-4 text-sm">
+    <form
+      action={submitApproval}
+      data-signal-type={signal.type}
+      className="rounded-xl border border-gray-200 bg-white p-4 text-sm"
+    >
       <input type="hidden" name="signalId" value={signal.id} />
 
       <div className="flex items-start justify-between gap-3">
