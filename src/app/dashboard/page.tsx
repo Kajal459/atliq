@@ -36,20 +36,20 @@ export default async function DashboardHomePage() {
       </div>
 
       {o.needsReviewCount > 0 && (
-        <p className="rounded-xl bg-amber-100 px-4 py-2.5 text-sm text-amber-900">
+        <p className="border-l-2 border-amber-600 py-1 pl-4 text-sm text-ink">
           {o.needsReviewCount} deal{o.needsReviewCount === 1 ? "" : "s"} moved backward and need a look - see the{" "}
-          <Link href="/dashboard/digest" className="font-medium underline">
+          <Link href="/dashboard/digest" className="font-medium text-forest-700 underline">
             Weekly Digest
           </Link>
           .
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-8 sm:grid-cols-2">
         {/* Pipeline by stage */}
-        <div className="rounded-2xl bg-cream-50 p-5">
+        <div className="border-t border-cream-100 pt-5">
           <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Pipeline by stage</h2>
-          <div className="mt-4 space-y-2.5">
+          <div className="mt-5 space-y-3">
             {o.stageBreakdown.map((s) => (
               <div key={s.stage}>
                 <div className="flex items-center justify-between text-sm">
@@ -58,9 +58,9 @@ export default async function DashboardHomePage() {
                     {s.count} · {formatUsd(s.valueUsd)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white">
+                <div className="mt-1.5 h-1 bg-cream-100">
                   <div
-                    className="h-1.5 rounded-full bg-forest-500"
+                    className="h-1 bg-forest-600"
                     style={{ width: `${(s.count / maxStageCount) * 100}%` }}
                   />
                 </div>
@@ -70,9 +70,9 @@ export default async function DashboardHomePage() {
         </div>
 
         {/* Workload by owner */}
-        <div className="rounded-2xl bg-cream-50 p-5">
+        <div className="border-t border-cream-100 pt-5">
           <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Open deals by owner</h2>
-          <div className="mt-4 space-y-2.5">
+          <div className="mt-5 space-y-3">
             {o.ownerBreakdown.map((ow) => (
               <div key={ow.owner}>
                 <div className="flex items-center justify-between text-sm">
@@ -81,9 +81,9 @@ export default async function DashboardHomePage() {
                     {ow.count} · {formatUsd(ow.valueUsd)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-white">
+                <div className="mt-1.5 h-1 bg-cream-100">
                   <div
-                    className={`h-1.5 rounded-full ${ow.owner === "Unassigned" ? "bg-amber-400" : "bg-forest-500"}`}
+                    className={`h-1 ${ow.owner === "Unassigned" ? "bg-amber-500" : "bg-forest-600"}`}
                     style={{ width: `${(ow.count / maxOwnerCount) * 100}%` }}
                   />
                 </div>
@@ -95,17 +95,17 @@ export default async function DashboardHomePage() {
 
       {/* Pending approvals by type */}
       {o.signalTypeBreakdown.length > 0 && (
-        <div className="rounded-2xl bg-cream-50 p-5">
+        <div className="border-t border-cream-100 pt-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Waiting on your approval</h2>
             <Link href="/dashboard/approvals" className="text-xs font-medium text-forest-600 hover:underline">
               Open Approval Inbox →
             </Link>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             {o.signalTypeBreakdown.map((t) => (
-              <span key={t.type} className="rounded-full bg-white px-3 py-1 text-xs text-gray-600">
-                {t.icon} {t.count} {t.label.toLowerCase()}
+              <span key={t.type} className="text-sm text-gray-600">
+                {t.icon} {t.count} <span className="text-gray-400">{t.label.toLowerCase()}</span>
               </span>
             ))}
           </div>
@@ -127,13 +127,9 @@ function KpiCard({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={`h-full rounded-2xl p-4 ${highlight ? "bg-amber-100" : "bg-cream-50"}`}
-    >
-      <p className={`text-xs font-medium uppercase tracking-wide ${highlight ? "text-amber-700" : "text-gray-500"}`}>
-        {label}
-      </p>
-      <p className={`mt-1 font-serif text-2xl ${highlight ? "text-amber-900" : "text-ink"}`}>{value}</p>
+    <div className={`h-full border-l-2 py-1 pl-4 ${highlight ? "border-amber-600" : "border-forest-600"}`}>
+      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+      <p className="mt-1 font-serif text-2xl text-ink">{value}</p>
       <p className={`mt-0.5 text-xs ${highlight ? "text-amber-700" : "text-gray-500"}`}>{sub}</p>
     </div>
   );

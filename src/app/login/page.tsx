@@ -25,7 +25,7 @@ export default function LoginPage({
             </p>
           </div>
 
-          <div className="w-full max-w-sm rounded-2xl bg-white p-8 md:justify-self-end">
+          <div className="w-full max-w-sm rounded-2xl border border-cream-100 bg-white p-8 md:justify-self-end">
             <h2 className="text-lg font-medium text-ink">Sign in</h2>
             <p className="mt-1 text-sm text-gray-500">Team password required.</p>
 

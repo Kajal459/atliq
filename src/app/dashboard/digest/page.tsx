@@ -56,9 +56,9 @@ export default async function WeeklyDigestPage() {
       )}
 
       {totalItems === 0 && (
-        <p className="rounded-xl bg-cream-50 p-4 text-sm text-gray-500">
+        <p className="border-l-2 border-forest-600 py-1 pl-4 text-sm text-gray-500">
           Nothing needs attention right now - or the backfill hasn&apos;t been run yet. See the README for{" "}
-          <code className="rounded bg-white px-1">npm run backfill</code>.
+          <code className="text-forest-700">npm run backfill</code>.
         </p>
       )}
 
@@ -68,7 +68,7 @@ export default async function WeeklyDigestPage() {
             <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">
               {BUCKET_LABELS[bucket]} ({digest.buckets[bucket].length})
             </h2>
-            <div className="divide-y divide-cream-100 rounded-2xl bg-cream-50">
+            <div className="divide-y divide-cream-100 border-y border-cream-100">
               {digest.buckets[bucket].map((item, i) => (
                 <DigestRow key={`${item.dealId}-${i}`} item={item} />
               ))}
@@ -84,7 +84,7 @@ function DigestRow({ item }: { item: DigestItem }) {
   return (
     <Link
       href={`/dashboard/deals/${item.dealId}`}
-      className="flex items-center justify-between px-4 py-3 text-sm first:rounded-t-2xl last:rounded-b-2xl hover:bg-white"
+      className="flex items-center justify-between px-1 py-3 text-sm hover:bg-cream-50/60"
     >
       <div>
         <p className="font-medium text-ink">{item.company}</p>

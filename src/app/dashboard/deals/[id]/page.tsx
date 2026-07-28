@@ -27,10 +27,10 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-cream-50 p-5">
+      <div className="rounded-xl border border-cream-100 bg-white p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold text-ink">{deal.company}</h1>
+            <h1 className="font-serif text-2xl text-ink">{deal.company}</h1>
             <p className="text-sm text-gray-500">{deal.leadId} - {deal.serviceInterest ?? "unknown service interest"}</p>
           </div>
           {deal.stale && (
@@ -65,7 +65,7 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
             )
           )}
           {timeline.length === 0 && (
-            <p className="rounded-xl bg-cream-50 p-4 text-sm text-gray-500">
+            <p className="border-l-2 border-forest-600 py-1 pl-4 text-sm text-gray-500">
               No email or meeting-note activity recorded for this deal yet.
             </p>
           )}
@@ -97,9 +97,9 @@ function EventCard({
   };
 }) {
   return (
-    <div className="rounded-2xl bg-cream-50 p-4 text-sm">
+    <div className="rounded-xl border border-cream-100 bg-white p-4 text-sm">
       <div className="flex items-center justify-between">
-        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600">
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-500">
           {event.type === "email" ? "Email" : event.type === "meeting_note" ? "Meeting note" : "Reply"}
         </span>
         <span className="text-xs text-gray-400">{event.filename}</span>
@@ -112,7 +112,7 @@ function EventCard({
             <span
               key={s.id}
               title={s.citationQuote}
-              className="rounded-full bg-white px-2.5 py-0.5 text-xs text-accent"
+              className="rounded-full bg-forest-50 px-2.5 py-0.5 text-xs text-accent"
             >
               {s.type.replace(/_/g, " ")} · {s.status.replace(/_/g, " ")}
             </span>
@@ -125,7 +125,7 @@ function EventCard({
 
 function AuditCard({ audit }: { audit: { action: string; detail: string; actor: string; createdAt: Date } }) {
   return (
-    <div className="rounded-2xl bg-gray-50 p-3 text-xs text-gray-600">
+    <div className="border-l-2 border-gray-200 py-1.5 pl-4 text-xs text-gray-600">
       <span className="font-medium text-gray-700">{audit.actor}</span> - {audit.action.replace(/_/g, " ")}:{" "}
       {audit.detail}
       <span className="ml-2 text-gray-400">{audit.createdAt.toISOString().slice(0, 10)}</span>

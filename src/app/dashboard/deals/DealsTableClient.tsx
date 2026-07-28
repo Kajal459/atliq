@@ -110,7 +110,7 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 rounded-full bg-cream-100 px-3 py-1.5 text-sm text-ink">
+        <label className="flex items-center gap-1.5 rounded-full border border-cream-200 bg-white px-3 py-1.5 text-sm text-ink">
           <input type="checkbox" checked={staleOnly} onChange={(e) => setStaleOnly(e.target.checked)} />
           Stale only
         </label>
@@ -122,9 +122,9 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-2xl bg-cream-50">
+      <div className="overflow-hidden rounded-xl border border-cream-100">
         <table className="w-full text-sm">
-          <thead className="bg-cream-100 text-left text-xs uppercase tracking-wide text-gray-500">
+          <thead className="border-b-2 border-cream-100 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <SortableHeader label="Company" sortKey="company" active={sortKey} dir={sortDir} onClick={toggleSort} />
               <SortableHeader label="Stage" sortKey="stage" active={sortKey} dir={sortDir} onClick={toggleSort} />
@@ -136,7 +136,7 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
           </thead>
           <tbody className="divide-y divide-cream-100">
             {visible.map((deal) => (
-              <tr key={deal.id} className="hover:bg-white">
+              <tr key={deal.id} className="hover:bg-cream-50/60">
                 <td className="px-4 py-2">
                   <Link href={`/dashboard/deals/${deal.id}`} className="font-medium text-accent hover:underline">
                     {deal.company}
