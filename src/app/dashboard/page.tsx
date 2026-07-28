@@ -36,7 +36,7 @@ export default async function DashboardHomePage() {
       </div>
 
       {o.needsReviewCount > 0 && (
-        <p className="rounded-lg border border-amber-300 bg-amber-100 px-4 py-2 text-sm text-amber-900">
+        <p className="rounded-xl bg-amber-100 px-4 py-2.5 text-sm text-amber-900">
           {o.needsReviewCount} deal{o.needsReviewCount === 1 ? "" : "s"} moved backward and need a look - see the{" "}
           <Link href="/dashboard/digest" className="font-medium underline">
             Weekly Digest
@@ -45,9 +45,9 @@ export default async function DashboardHomePage() {
         </p>
       )}
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {/* Pipeline by stage */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-2xl bg-cream-50 p-5">
           <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Pipeline by stage</h2>
           <div className="mt-4 space-y-2.5">
             {o.stageBreakdown.map((s) => (
@@ -58,7 +58,7 @@ export default async function DashboardHomePage() {
                     {s.count} · {formatUsd(s.valueUsd)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-gray-100">
+                <div className="mt-1 h-1.5 rounded-full bg-white">
                   <div
                     className="h-1.5 rounded-full bg-forest-500"
                     style={{ width: `${(s.count / maxStageCount) * 100}%` }}
@@ -70,7 +70,7 @@ export default async function DashboardHomePage() {
         </div>
 
         {/* Workload by owner */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-2xl bg-cream-50 p-5">
           <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Open deals by owner</h2>
           <div className="mt-4 space-y-2.5">
             {o.ownerBreakdown.map((ow) => (
@@ -81,7 +81,7 @@ export default async function DashboardHomePage() {
                     {ow.count} · {formatUsd(ow.valueUsd)}
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 rounded-full bg-gray-100">
+                <div className="mt-1 h-1.5 rounded-full bg-white">
                   <div
                     className={`h-1.5 rounded-full ${ow.owner === "Unassigned" ? "bg-amber-400" : "bg-forest-500"}`}
                     style={{ width: `${(ow.count / maxOwnerCount) * 100}%` }}
@@ -95,7 +95,7 @@ export default async function DashboardHomePage() {
 
       {/* Pending approvals by type */}
       {o.signalTypeBreakdown.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-2xl bg-cream-50 p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Waiting on your approval</h2>
             <Link href="/dashboard/approvals" className="text-xs font-medium text-forest-600 hover:underline">
@@ -104,7 +104,7 @@ export default async function DashboardHomePage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {o.signalTypeBreakdown.map((t) => (
-              <span key={t.type} className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-600">
+              <span key={t.type} className="rounded-full bg-white px-3 py-1 text-xs text-gray-600">
                 {t.icon} {t.count} {t.label.toLowerCase()}
               </span>
             ))}
@@ -128,9 +128,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className={`h-full rounded-xl border p-4 ${
-        highlight ? "border-amber-300 bg-amber-100" : "border-gray-200 bg-white"
-      }`}
+      className={`h-full rounded-2xl p-4 ${highlight ? "bg-amber-100" : "bg-cream-50"}`}
     >
       <p className={`text-xs font-medium uppercase tracking-wide ${highlight ? "text-amber-700" : "text-gray-500"}`}>
         {label}

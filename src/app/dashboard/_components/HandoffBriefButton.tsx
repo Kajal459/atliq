@@ -59,7 +59,7 @@ export function HandoffBriefButton({
       {error && <p className="mt-2 text-sm text-warn">{error}</p>}
 
       {brief && (
-        <div className="mt-3 rounded-lg border border-forest-100 bg-forest-50 p-4">
+        <div className="mt-3 rounded-2xl bg-forest-50 p-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-forest-600">Handoff brief</p>
             <button type="button" onClick={copy} className="text-xs text-forest-600 hover:underline">

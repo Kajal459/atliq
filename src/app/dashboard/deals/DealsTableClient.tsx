@@ -110,7 +110,7 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
             </option>
           ))}
         </select>
-        <label className="flex items-center gap-1.5 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-600">
+        <label className="flex items-center gap-1.5 rounded-full bg-cream-100 px-3 py-1.5 text-sm text-ink">
           <input type="checkbox" checked={staleOnly} onChange={(e) => setStaleOnly(e.target.checked)} />
           Stale only
         </label>
@@ -122,9 +122,9 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
         </span>
       </div>
 
-      <div className="overflow-hidden rounded border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-2xl bg-cream-50">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+          <thead className="bg-cream-100 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
               <SortableHeader label="Company" sortKey="company" active={sortKey} dir={sortDir} onClick={toggleSort} />
               <SortableHeader label="Stage" sortKey="stage" active={sortKey} dir={sortDir} onClick={toggleSort} />
@@ -134,15 +134,15 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-cream-100">
             {visible.map((deal) => (
-              <tr key={deal.id} className="hover:bg-gray-50">
+              <tr key={deal.id} className="hover:bg-white">
                 <td className="px-4 py-2">
                   <Link href={`/dashboard/deals/${deal.id}`} className="font-medium text-accent hover:underline">
                     {deal.company}
                   </Link>
                   {deal.stale && (
-                    <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">stale</span>
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">stale</span>
                   )}
                 </td>
                 <td className="px-4 py-2">{deal.stage}</td>

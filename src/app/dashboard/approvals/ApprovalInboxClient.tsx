@@ -52,7 +52,7 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
 
   if (signals.length === 0) {
     return (
-      <p className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">
+      <p className="rounded-xl bg-cream-50 p-4 text-sm text-gray-500">
         Nothing pending right now.
       </p>
     );
@@ -64,8 +64,8 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
         <button
           type="button"
           onClick={() => setFilter("all")}
-          className={`rounded-full px-3 py-1 font-medium transition-colors ${
-            filter === "all" ? "bg-forest-600 text-white" : "border border-gray-200 bg-white text-gray-600 hover:border-forest-300"
+          className={`rounded-full px-3 py-1.5 font-medium transition-colors ${
+            filter === "all" ? "bg-forest-600 text-white" : "bg-cream-100 text-ink hover:bg-cream-100/70"
           }`}
         >
           All ({signals.length})
@@ -75,8 +75,8 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
             key={type}
             type="button"
             onClick={() => setFilter(type)}
-            className={`rounded-full px-3 py-1 font-medium transition-colors ${
-              filter === type ? "bg-forest-600 text-white" : "border border-gray-200 bg-white text-gray-600 hover:border-forest-300"
+            className={`rounded-full px-3 py-1.5 font-medium transition-colors ${
+              filter === type ? "bg-forest-600 text-white" : "bg-cream-100 text-ink hover:bg-cream-100/70"
             }`}
           >
             {SIGNAL_TYPE_META[type]?.icon ?? "•"} {count} {SIGNAL_TYPE_META[type]?.label.toLowerCase() ?? type}
@@ -86,7 +86,7 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
 
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <p className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-500">
+          <p className="rounded-xl bg-cream-50 p-4 text-sm text-gray-500">
             Nothing waiting in this filter right now.
           </p>
         ) : (
@@ -115,21 +115,21 @@ function ApprovalCard({
   const hasEditableDraft = !signal.field && signal.type === "deferral_reminder" && Boolean(signal.proposedValue);
 
   return (
-    <form action={submitApproval} className="rounded-xl border border-gray-200 bg-white p-4 text-sm">
+    <form action={submitApproval} className="rounded-2xl bg-cream-50 p-4 text-sm">
       <input type="hidden" name="signalId" value={signal.id} />
 
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <span className="mt-0.5 text-base">{meta.icon}</span>
           <div>
-            <span className="mr-2 rounded-full bg-forest-50 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-forest-700">
+            <span className="mr-2 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-forest-700">
               {meta.label}
             </span>
             <p className="mt-1 font-medium leading-snug text-ink">{signal.headline}</p>
           </div>
         </div>
         {signal.confidence === "low" && (
-          <span className="whitespace-nowrap rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+          <span className="whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
             low confidence
           </span>
         )}
@@ -138,7 +138,7 @@ function ApprovalCard({
       <details className="mt-2 ml-7">
         <summary className="cursor-pointer text-xs font-medium text-forest-600">Why is this here?</summary>
         <div className="mt-2 space-y-1.5">
-          <p className="rounded bg-gray-50 p-2 text-gray-700">&ldquo;{signal.citationQuote}&rdquo;</p>
+          <p className="rounded-lg bg-white p-2 text-gray-700">&ldquo;{signal.citationQuote}&rdquo;</p>
           {signal.reasoning && <p className="text-xs text-gray-500">{signal.reasoning}</p>}
           <p className="text-xs text-gray-400">Source: {signal.sourceFilename ?? "system"}</p>
         </div>
