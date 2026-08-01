@@ -8,7 +8,7 @@ export default function LoginPage({
   searchParams: { error?: string; next?: string };
 }) {
   return (
-    <main className="flex min-h-screen flex-col bg-cream-100">
+    <main className="flex min-h-screen flex-col bg-white">
       <header className="bg-forest-700 px-6 py-4">
         <AtliqLogo />
       </header>
