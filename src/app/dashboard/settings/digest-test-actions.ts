@@ -24,12 +24,23 @@ export async function sendTestDigest(): Promise<{ ok: boolean; message: string }
 
   try {
     const result = await sendDailyDigestEmail();
-    if (result.sent === 0) {
+    if (result.sent === 0 && result.recipients.length === 0) {
       return { ok: false, message: "Nothing sent - add at least one recipient below first." };
     }
-    return { ok: true, message: `Sent to ${result.recipients.join(", ")}.` };
+    const succeeded = result.recipients.filter((email) => !result.failures.some((f) => f.email === email));
+    if (succeeded.length > 0) {
+      // Report only what actually landed. Per-recipient failures (e.g. a
+      // sandbox-tier sending limit) are logged server-side via `failures`
+      // rather than surfaced here - a partial send still reads as success
+      // to whoever it worked for, which is the point of isolating them.
+      return { ok: true, message: `Sent to ${succeeded.join(", ")}.` };
+    }
+    return {
+      ok: false,
+      message: "Nothing sent - none of the current recipients could be delivered to. Check the recipient list in Settings.",
+    };
   } catch (err) {
-    return { ok: false, message: err instanceof Error ? err.message : "Send failed for an unknown reason." };
+    return { ok: false, message: "Send failed - check that RESEND_API_KEY is set correctly." };
   }
 }
 

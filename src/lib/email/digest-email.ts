@@ -15,9 +15,13 @@ type PendingApprovalWithDeal = Prisma.SignalGetPayload<{ include: { deal: true }
 
 const MAX_APPROVALS_IN_EMAIL = 6;
 
-export async function sendDailyDigestEmail(): Promise<{ sent: number; recipients: string[] }> {
+export async function sendDailyDigestEmail(): Promise<{
+  sent: number;
+  recipients: string[];
+  failures: { email: string; error: string }[];
+}> {
   const recipients = await listDigestRecipients();
-  if (recipients.length === 0) return { sent: 0, recipients: [] };
+  if (recipients.length === 0) return { sent: 0, recipients: [], failures: [] };
 
   const base = process.env.APP_BASE_URL || "http://localhost:3000";
   const digest = await buildWeeklyDigest();
@@ -37,16 +41,27 @@ export async function sendDailyDigestEmail(): Promise<{ sent: number; recipients
 
   const atRiskItems = [...digest.buckets.today, ...digest.buckets.stale, ...digest.buckets.needsReview];
 
+  let sent = 0;
+  const failures: { email: string; error: string }[] = [];
+
   for (const recipient of recipients) {
     const html = buildDigestHtml({ base, digest, atRiskItems, pendingApprovals, overflowCount, recipientName: recipient.name });
-    await sendEmail({
-      to: recipient.email,
-      subject: `AtliQ digest - ${formatUsd(digest.atRiskValueUsd)} at risk across ${digest.atRiskDealCount} deal(s)`,
-      html,
-    });
+    try {
+      await sendEmail({
+        to: recipient.email,
+        subject: `AtliQ digest - ${formatUsd(digest.atRiskValueUsd)} at risk across ${digest.atRiskDealCount} deal(s)`,
+        html,
+      });
+      sent++;
+    } catch (err) {
+      // One recipient rejecting the send (e.g. Resend's unverified-domain
+      // sandbox limit) shouldn't block delivery to everyone else on the
+      // list - collect the failure and keep going.
+      failures.push({ email: recipient.email, error: err instanceof Error ? err.message : "unknown error" });
+    }
   }
 
-  return { sent: recipients.length, recipients: recipients.map((r) => r.email) };
+  return { sent, recipients: recipients.map((r) => r.email), failures };
 }
 
 function formatUsd(value: number): string {

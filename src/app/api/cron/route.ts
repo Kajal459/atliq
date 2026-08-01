@@ -35,10 +35,17 @@ export async function GET(request: NextRequest) {
     try {
       const digestResult = await sendDailyDigestEmail();
       digestEmailsSent = digestResult.sent;
+      // sendDailyDigestEmail() already isolates per-recipient failures (e.g.
+      // Resend's unverified-domain sandbox limit) so one bad recipient
+      // doesn't block delivery to the rest - surface them without treating
+      // the whole run as failed.
+      if (digestResult.failures.length > 0) {
+        digestError = digestResult.failures.map((f) => `${f.email}: ${f.error}`).join("; ");
+      }
     } catch (err) {
-      // Don't let a missing RESEND_API_KEY or a bad recipient fail the whole
-      // cron run - stale-flagging and deferrals still matter even if email
-      // isn't configured yet.
+      // Don't let a missing RESEND_API_KEY or a total send failure fail the
+      // whole cron run - stale-flagging and deferrals still matter even if
+      // email isn't configured yet.
       digestError = err instanceof Error ? err.message : "unknown error";
     }
   } else {
