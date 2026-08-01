@@ -30,6 +30,7 @@ enum SourceType {
   email
   meeting_note
   founder_reply // a reply to a reminder/digest item - FR-11, treated like any inbound signal
+  quick_capture // a note typed straight into the Home dashboard (WhatsApp/call summary, etc.) - FR-13
 }
 
 enum SignalType {
@@ -133,4 +134,22 @@ model AuditLog {
   detail    String
   actor     String // "AI" or a founder's name
   createdAt DateTime @default(now())
+}
+
+// Who gets the daily digest email - managed from Settings instead of an env
+// var, so adding/removing a recipient doesn't need a redeploy.
+model DigestRecipient {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+// Singleton row (fixed id "digest") - the on/off switch for the automatic
+// cron-triggered send. The manual "Send test digest now" button in Settings
+// ignores this and always sends, since that's an explicit one-off action.
+model DigestSetting {
+  id        String   @id
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
 }

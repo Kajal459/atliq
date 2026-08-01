@@ -10,3 +10,12 @@ body {
 h1 {
   font-family: var(--font-voice), Georgia, serif;
 }
+
+/* Visible keyboard focus everywhere - four people share this tool and tab
+   through approvals fast; a browser default (or no) focus ring made that
+   hard to track. Skipped for mouse/touch clicks via :focus-visible so it
+   doesn't add a ring to every click. */
+:focus-visible {
+  outline: 2px solid #0e7a54;
+  outline-offset: 2px;
+}

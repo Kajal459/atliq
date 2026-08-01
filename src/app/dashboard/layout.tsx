@@ -1,39 +1,51 @@
 import Link from "next/link";
 import { signOut } from "./actions";
+import { NavLinks } from "./_components/NavLinks";
+import { ConfirmButton } from "./_components/ConfirmButton";
+import { QuickCaptureLauncher } from "./_components/QuickCaptureLauncher";
+import { Footer } from "@/components/Footer";
+import { AtliqLogo } from "@/components/AtliqLogo";
+import { OWNERS } from "@/lib/automation/owner";
+import { prisma } from "@/lib/db";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Fetched here (not per-page) so the "attach to a specific deal" dropdown
+  // in Quick Capture is available from anywhere in the dashboard, not just
+  // Home - it's a light query (id + company only) and layouts already
+  // re-render on navigation the same way pages do.
+  const deals = await prisma.deal.findMany({
+    where: { mergedIntoDealId: null },
+    select: { id: true, company: true },
+    orderBy: { company: "asc" },
+  });
+
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-forest-100 bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
+      <header className="bg-forest-700">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-8">
-            <span className="font-serif text-2xl italic text-forest-600">atliq</span>
-            <nav className="flex gap-6 text-sm text-gray-600">
-              <Link href="/dashboard" className="hover:text-forest-600">
-                Home
-              </Link>
-              <Link href="/dashboard/digest" className="hover:text-forest-600">
-                Weekly Digest
-              </Link>
-              <Link href="/dashboard/approvals" className="hover:text-forest-600">
-                Approval Inbox
-              </Link>
-              <Link href="/dashboard/deals" className="hover:text-forest-600">
-                Deal Timeline
-              </Link>
-            </nav>
+            <Link href="/dashboard">
+              <AtliqLogo />
+            </Link>
+            <NavLinks />
           </div>
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="rounded-full border border-forest-600 px-4 py-1.5 text-sm font-medium text-forest-600 hover:bg-forest-50"
-            >
-              Sign out
-            </button>
-          </form>
+          <ConfirmButton
+            label="Sign out"
+            confirmText="Sign out of the shared AtliQ dashboard?"
+            confirmLabel="Sign out"
+            tone="neutral"
+            onConfirm={signOut}
+            className="rounded-full border border-cream-100 px-4 py-1.5 text-sm font-medium text-cream-100 hover:bg-forest-600"
+          />
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        {children}
+        <QuickCaptureLauncher owners={OWNERS} deals={deals} />
+      </main>
+      <Footer />
     </div>
   );
 }

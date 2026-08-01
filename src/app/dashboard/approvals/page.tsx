@@ -45,7 +45,7 @@ export default async function ApprovalInboxPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl text-ink">Approval Inbox</h1>
+        <h1 className="font-serif text-2xl italic text-ink">Approval Inbox</h1>
         <p className="mt-1 text-sm text-gray-500">
           Nothing is written, sent, or scheduled until someone taps Approve. Sorted so the highest-value items -
           new leads and due reminders - come first.

@@ -25,7 +25,7 @@ export default async function WeeklyDigestPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl text-ink">Weekly Digest</h1>
+        <h1 className="font-serif text-2xl italic text-ink">Weekly Digest</h1>
         <p className="mt-1 text-sm text-gray-500">
           What needs attention, grouped by time horizon instead of one flat list - the view that replaces ~2
           hours/month of manually reconciling the CRM against everyone&apos;s inboxes.

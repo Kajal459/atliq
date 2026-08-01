@@ -83,12 +83,12 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search company..."
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
         />
         <select
           value={stageFilter}
           onChange={(e) => setStageFilter(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
         >
           <option value="all">All stages</option>
           {stagesPresent.map((s) => (
@@ -100,7 +100,7 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
         <select
           value={ownerFilter}
           onChange={(e) => setOwnerFilter(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1.5 text-sm"
+          className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
         >
           <option value="all">All owners</option>
           <option value="__unassigned">Unassigned</option>

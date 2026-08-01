@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SIGNAL_TYPE_META } from "@/lib/automation/describe-signal";
 import { submitApproval } from "./actions";
+import { ConfirmButton } from "../_components/ConfirmButton";
 
 export interface PendingSignal {
   id: string;
@@ -113,11 +114,19 @@ function ApprovalCard({
   const meta = SIGNAL_TYPE_META[signal.type] ?? { icon: "•", label: signal.type.replace(/_/g, " ") };
   const hasEditableField = Boolean(signal.field);
   const hasEditableDraft = !signal.field && signal.type === "deferral_reminder" && Boolean(signal.proposedValue);
+  const [editedValue, setEditedValue] = useState(signal.proposedValue ?? "");
+
+  async function submit(action: "approve" | "reject" | "edit") {
+    const formData = new FormData();
+    formData.set("signalId", signal.id);
+    formData.set("action", action);
+    formData.set("actor", actor);
+    if (action === "edit") formData.set("editedValue", editedValue);
+    await submitApproval(formData);
+  }
 
   return (
-    <form action={submitApproval} className="rounded-xl border border-cream-100 bg-white p-4 text-sm">
-      <input type="hidden" name="signalId" value={signal.id} />
-
+    <div className="rounded-xl border border-cream-100 bg-white p-4 text-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2.5">
           <span className="mt-0.5 text-base">{meta.icon}</span>
@@ -146,9 +155,9 @@ function ApprovalCard({
         <div className="mt-3 ml-7 flex items-center gap-2">
           <label className="text-xs font-medium text-gray-500">{signal.field}:</label>
           <input
-            name="editedValue"
-            defaultValue={signal.proposedValue ?? ""}
-            className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm"
+            value={editedValue}
+            onChange={(e) => setEditedValue(e.target.value)}
+            className="flex-1 rounded-lg border border-gray-300 px-2 py-1 text-sm"
           />
         </div>
       )}
@@ -157,21 +166,19 @@ function ApprovalCard({
         <div className="mt-3 ml-7 space-y-1">
           <label className="text-xs font-medium text-gray-500">Drafted email (edit before sending yourself):</label>
           <textarea
-            name="editedValue"
-            defaultValue={signal.proposedValue ?? ""}
+            value={editedValue}
+            onChange={(e) => setEditedValue(e.target.value)}
             rows={5}
-            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1 text-sm"
           />
         </div>
       )}
 
       <div className="mt-3 ml-7 flex items-center justify-between border-t border-gray-100 pt-3">
         <select
-          name="actor"
-          required
           value={actor}
           onChange={(e) => onActorChange(e.target.value)}
-          className="rounded border border-gray-300 px-2 py-1 text-xs"
+          className="rounded-lg border border-gray-300 px-2 py-1 text-xs"
         >
           <option value="" disabled>
             Acting as...
@@ -184,34 +191,35 @@ function ApprovalCard({
         </select>
 
         <div className="flex gap-2">
-          <button
-            type="submit"
-            name="action"
-            value="reject"
-            className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Reject
-          </button>
+          <ConfirmButton
+            label="Reject"
+            confirmText={`Reject this ${meta.label.toLowerCase()}${actor ? ` as ${actor}` : ""}? It's removed from the queue and logged either way.`}
+            confirmLabel="Reject"
+            tone="danger"
+            disabled={!actor}
+            onConfirm={() => submit("reject")}
+            className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          />
           {(hasEditableField || hasEditableDraft) && (
-            <button
-              type="submit"
-              name="action"
-              value="edit"
-              className="rounded-full border border-forest-600 px-3 py-1.5 text-xs font-medium text-forest-600 hover:bg-forest-50"
-            >
-              Edit &amp; Approve
-            </button>
+            <ConfirmButton
+              label="Edit & Approve"
+              confirmText={`Approve this ${meta.label.toLowerCase()} with your edited value${actor ? ` as ${actor}` : ""}? This applies the change to the CRM.`}
+              confirmLabel="Approve edit"
+              disabled={!actor}
+              onConfirm={() => submit("edit")}
+              className="rounded-full border border-forest-600 px-3 py-1.5 text-xs font-medium text-forest-600 hover:bg-forest-50 disabled:cursor-not-allowed disabled:opacity-50"
+            />
           )}
-          <button
-            type="submit"
-            name="action"
-            value="approve"
-            className="rounded-full bg-forest-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-forest-700"
-          >
-            Approve
-          </button>
+          <ConfirmButton
+            label="Approve"
+            confirmText={`Approve this ${meta.label.toLowerCase()}${actor ? ` as ${actor}` : ""}? This applies the change to the CRM.`}
+            confirmLabel="Approve"
+            disabled={!actor}
+            onConfirm={() => submit("approve")}
+            className="rounded-full bg-forest-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-forest-700 disabled:cursor-not-allowed disabled:opacity-50"
+          />
         </div>
       </div>
-    </form>
+    </div>
   );
 }

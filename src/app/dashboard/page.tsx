@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { buildDashboardOverview } from "@/lib/dashboard/overview";
+import { OWNERS } from "@/lib/automation/owner";
+import { QuickCaptureBox } from "./_components/QuickCaptureBox";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -9,24 +12,29 @@ function formatUsd(value: number): string {
 
 export default async function DashboardHomePage() {
   const o = await buildDashboardOverview();
+  const deals = await prisma.deal.findMany({
+    where: { mergedIntoDealId: null },
+    select: { id: true, company: true },
+    orderBy: { company: "asc" },
+  });
   const maxStageCount = Math.max(1, ...o.stageBreakdown.map((s) => s.count));
   const maxOwnerCount = Math.max(1, ...o.ownerBreakdown.map((s) => s.count));
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl text-ink">Home</h1>
+        <h1 className="font-serif text-2xl italic text-ink">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">The state of the book, at a glance - the numbers behind the digest.</p>
       </div>
 
       {/* Headline KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard label="Open pipeline" value={formatUsd(o.openPipelineValueUsd)} sub={`${o.openDealCount} deal${o.openDealCount === 1 ? "" : "s"}`} />
-        <Link href="/dashboard/approvals" className="block">
-          <KpiCard label="Pending approvals" value={String(o.pendingApprovalCount)} sub="in the Approval Inbox" highlight={o.pendingApprovalCount > 0} />
+        <Link href="/dashboard/approvals" className="block rounded-sm">
+          <KpiCard label="Pending approvals" value={String(o.pendingApprovalCount)} sub="in the Approval Inbox" highlight={o.pendingApprovalCount > 0} linked />
         </Link>
-        <Link href="/dashboard/deals" className="block">
-          <KpiCard label="Stale deals" value={String(o.staleCount)} sub={o.staleCount > 0 ? formatUsd(o.staleValueUsd) + " at risk" : "none right now"} highlight={o.staleCount > 0} />
+        <Link href="/dashboard/deals" className="block rounded-sm">
+          <KpiCard label="Stale deals" value={String(o.staleCount)} sub={o.staleCount > 0 ? formatUsd(o.staleValueUsd) + " at risk" : "none right now"} highlight={o.staleCount > 0} linked />
         </Link>
         <KpiCard
           label="Win rate"
@@ -111,6 +119,8 @@ export default async function DashboardHomePage() {
           </div>
         </div>
       )}
+
+      <QuickCaptureBox owners={OWNERS} deals={deals} />
     </div>
   );
 }
@@ -120,15 +130,28 @@ function KpiCard({
   value,
   sub,
   highlight,
+  linked,
 }: {
   label: string;
   value: string;
   sub: string;
   highlight?: boolean;
+  linked?: boolean;
 }) {
   return (
-    <div className={`h-full border-l-2 py-1 pl-4 ${highlight ? "border-amber-600" : "border-forest-600"}`}>
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+    <div
+      className={`group h-full border-l-2 py-1 pl-4 pr-2 transition-colors ${
+        highlight ? "border-amber-600" : "border-forest-600"
+      } ${linked ? "hover:bg-cream-50/60" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
+        {linked && (
+          <span className="text-gray-300 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden>
+            →
+          </span>
+        )}
+      </div>
       <p className="mt-1 font-serif text-2xl text-ink">{value}</p>
       <p className={`mt-0.5 text-xs ${highlight ? "text-amber-700" : "text-gray-500"}`}>{sub}</p>
     </div>

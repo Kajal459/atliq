@@ -1,35 +1,22 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { buildWeeklyDigest } from "@/lib/digest/buckets";
+import { listDigestRecipients } from "@/lib/digest/recipients";
 import { signQuickAction } from "@/lib/auth/quick-action-token";
 import { SIGNAL_TYPE_META, SIGNAL_TYPE_PRIORITY, headlineForSignal } from "@/lib/automation/describe-signal";
-import { sendEmail } from "@/lib/email/resend-send";
+import { sendEmail } from "./resend-send";
 
 type PendingApprovalWithDeal = Prisma.SignalGetPayload<{ include: { deal: true } }>;
 
 // The push half of "why delivery can't just be a URL people should check"
 // (see 03 - Architecture doc). Sent once a day by the cron job to whoever's
-// listed in DIGEST_RECIPIENTS - format "Name:email,Name:email" - so it lands
-// in an inbox habit that already exists instead of a new tab to remember.
+// listed as a DigestRecipient (managed from Settings) - lands in an inbox
+// habit that already exists instead of a new tab to remember.
 
 const MAX_APPROVALS_IN_EMAIL = 6;
 
-function parseRecipients(): { name: string; email: string }[] {
-  const raw = process.env.DIGEST_RECIPIENTS;
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((pair) => pair.trim())
-    .filter(Boolean)
-    .map((pair) => {
-      const [name, email] = pair.split(":").map((s) => s.trim());
-      return { name: name || email, email };
-    })
-    .filter((r) => r.email);
-}
-
 export async function sendDailyDigestEmail(): Promise<{ sent: number; recipients: string[] }> {
-  const recipients = parseRecipients();
+  const recipients = await listDigestRecipients();
   if (recipients.length === 0) return { sent: 0, recipients: [] };
 
   const base = process.env.APP_BASE_URL || "http://localhost:3000";

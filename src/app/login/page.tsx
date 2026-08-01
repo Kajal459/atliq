@@ -1,4 +1,6 @@
 import { login } from "./actions";
+import { Footer } from "@/components/Footer";
+import { AtliqLogo } from "@/components/AtliqLogo";
 
 export default function LoginPage({
   searchParams,
@@ -7,8 +9,8 @@ export default function LoginPage({
 }) {
   return (
     <main className="flex min-h-screen flex-col bg-cream-100">
-      <header className="border-b border-forest-100 bg-white px-6 py-4">
-        <span className="font-serif text-2xl italic text-forest-600">atliq</span>
+      <header className="bg-forest-700 px-6 py-4">
+        <AtliqLogo />
       </header>
 
       <div className="flex flex-1 items-center px-6 py-16">
@@ -41,7 +43,7 @@ export default function LoginPage({
                   type="password"
                   required
                   autoFocus
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-forest-600 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-forest-600"
                 />
               </div>
               {searchParams.error && (
@@ -57,6 +59,7 @@ export default function LoginPage({
           </div>
         </div>
       </div>
+      <Footer />
     </main>
   );
 }

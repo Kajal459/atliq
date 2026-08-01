@@ -26,7 +26,7 @@ export default async function DealsListPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl text-ink">Deal Timeline</h1>
+        <h1 className="font-serif text-2xl italic text-ink">Deal Timeline</h1>
         <p className="mt-1 text-sm text-gray-500">
           Every deal, with its CRM record, email threads, and meeting notes merged into one thread - each claim
           linked back to its source.

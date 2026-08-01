@@ -12,13 +12,20 @@ import { assignOwnerIfBlank } from "./owner";
  */
 export async function applyExtractionResult(
   sourceEventId: string,
-  result: ExtractionResult
+  result: ExtractionResult,
+  options?: { forceUnmatched?: boolean }
 ): Promise<{ dealId: string | null; created: number; autoApplied: number }> {
   const sourceEvent = await prisma.sourceEvent.findUniqueOrThrow({
     where: { id: sourceEventId },
   });
 
-  const deal = await matchOrCreateDeal(sourceEvent.dealId, result.matched_deal_hint);
+  // forceUnmatched: quick capture's explicit "New lead" choice. Skips the
+  // model's own matched_deal_hint too, not just the source event's dealId -
+  // otherwise a hint that happens to contain an existing company's name
+  // would silently reattach a note the person deliberately marked as new.
+  const deal = options?.forceUnmatched
+    ? null
+    : await matchOrCreateDeal(sourceEvent.dealId, result.matched_deal_hint);
 
   if (deal && !sourceEvent.dealId) {
     await prisma.sourceEvent.update({ where: { id: sourceEventId }, data: { dealId: deal.id } });

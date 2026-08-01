@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmButton } from "./ConfirmButton";
 
 export function HandoffBriefButton({
   scope,
@@ -47,14 +48,18 @@ export function HandoffBriefButton({
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={generate}
+      <ConfirmButton
+        label={loading ? "Generating..." : label}
+        confirmText={
+          scope === "deal"
+            ? "Generate a handoff brief for this deal? This runs a fresh AI summary of the timeline."
+            : "Generate a pipeline handoff brief? This runs a fresh AI summary across the whole book."
+        }
+        confirmLabel="Generate"
         disabled={loading}
+        onConfirm={generate}
         className="rounded-full border border-forest-600 px-4 py-1.5 text-sm font-medium text-forest-600 hover:bg-forest-50 disabled:opacity-50"
-      >
-        {loading ? "Generating..." : label}
-      </button>
+      />
 
       {error && <p className="mt-2 text-sm text-warn">{error}</p>}
 
