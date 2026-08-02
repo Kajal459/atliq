@@ -36,6 +36,7 @@ export default async function ApprovalInboxPage() {
     reasoning: s.reasoning,
     suggestedServiceLine: s.suggestedServiceLine,
     leadSource: s.leadSource,
+    reviewerNote: s.reviewerNote,
     company: s.deal?.company ?? null,
     sourceFilename: s.sourceEvent?.filename ?? null,
     sourceSubject: s.sourceEvent?.subject ?? null,

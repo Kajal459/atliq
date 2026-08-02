@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { HandoffBriefButton } from "../../_components/HandoffBriefButton";
+import { FollowupDateField } from "./FollowupDateField";
+import { OWNERS } from "@/lib/automation/owner";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +45,11 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
           <Field label="Stage" value={deal.stage} />
           <Field label="Owner" value={deal.owner ?? "unassigned"} />
           <Field label="Value" value={deal.estValueUsd ? `$${deal.estValueUsd.toLocaleString()}` : "-"} />
-          <Field label="Next follow-up" value={deal.nextFollowupDate?.toISOString().slice(0, 10) ?? "-"} />
+          <FollowupDateField
+            dealId={deal.id}
+            initialValue={deal.nextFollowupDate ? deal.nextFollowupDate.toISOString().slice(0, 10) : null}
+            owners={OWNERS}
+          />
           <Field label="Contact" value={deal.contactName ?? "-"} />
           <Field label="Source" value={deal.source ?? "-"} />
           <Field label="Created" value={deal.createdDate?.toISOString().slice(0, 10) ?? "-"} />

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { SIGNAL_TYPE_META } from "@/lib/automation/describe-signal";
-import { submitApproval } from "./actions";
+import { submitApproval, saveReviewerNote } from "./actions";
 import { ConfirmButton } from "../_components/ConfirmButton";
 
 export interface PendingSignal {
@@ -16,6 +16,7 @@ export interface PendingSignal {
   reasoning: string | null;
   suggestedServiceLine: string | null;
   leadSource: string | null;
+  reviewerNote: string | null;
   company: string | null;
   sourceFilename: string | null;
   sourceSubject: string | null;
@@ -23,6 +24,17 @@ export interface PendingSignal {
 }
 
 const ACTOR_STORAGE_KEY = "atliq-actor";
+
+// Friendly labels for the raw snake_case CRM field names a signal can
+// propose changing - "next_followup_date" in particular gets its own date
+// input below rather than a plain text box, since that's the field the
+// Deferral & Reach-Back Scheduler and the digest both key off of.
+function formatFieldLabel(field: string): string {
+  if (field === "next_followup_date") return "Next follow-up date";
+  return field
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 export function ApprovalInboxClient({ signals, owners }: { signals: PendingSignal[]; owners: readonly string[] }) {
   const [filter, setFilter] = useState<string>("all");
@@ -113,8 +125,20 @@ function ApprovalCard({
 }) {
   const meta = SIGNAL_TYPE_META[signal.type] ?? { icon: "•", label: signal.type.replace(/_/g, " ") };
   const hasEditableField = Boolean(signal.field);
+  const isDateField = signal.field === "next_followup_date";
   const hasEditableDraft = !signal.field && signal.type === "deferral_reminder" && Boolean(signal.proposedValue);
   const [editedValue, setEditedValue] = useState(signal.proposedValue ?? "");
+  const [note, setNote] = useState(signal.reviewerNote ?? "");
+  const [noteSaved, setNoteSaved] = useState(false);
+  const [savingNote, startSavingNote] = useTransition();
+
+  function handleSaveNote() {
+    startSavingNote(async () => {
+      await saveReviewerNote(signal.id, note);
+      setNoteSaved(true);
+      setTimeout(() => setNoteSaved(false), 2000);
+    });
+  }
 
   async function submit(action: "approve" | "reject" | "edit") {
     const formData = new FormData();
@@ -151,14 +175,45 @@ function ApprovalCard({
         </div>
       </details>
 
+      <div className="mt-3 ml-7 space-y-1">
+        <label className="text-xs font-medium text-gray-500">Notes</label>
+        <div className="flex items-start gap-2">
+          <textarea
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+              setNoteSaved(false);
+            }}
+            rows={2}
+            placeholder="Anything worth remembering about this one - context, why you're waiting, who to loop in..."
+            className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+          />
+          <button
+            type="button"
+            onClick={handleSaveNote}
+            disabled={savingNote || note === (signal.reviewerNote ?? "")}
+            className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {savingNote ? "Saving..." : "Save note"}
+          </button>
+        </div>
+        {noteSaved && <p className="text-xs text-forest-600">Saved.</p>}
+      </div>
+
       {hasEditableField && (
         <div className="mt-3 ml-7 flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500">{signal.field}:</label>
+          <label className="text-xs font-medium text-gray-500">{formatFieldLabel(signal.field!)}:</label>
           <input
+            type={isDateField ? "date" : "text"}
             value={editedValue}
             onChange={(e) => setEditedValue(e.target.value)}
             className="flex-1 rounded-lg border border-gray-300 px-2 py-1 text-sm"
           />
+          {isDateField && (
+            <span className="whitespace-nowrap text-xs text-gray-400">
+              currently: {signal.previousValue || "none set"}
+            </span>
+          )}
         </div>
       )}
 

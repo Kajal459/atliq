@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { extractSignals } from "@/lib/extraction/extract";
 import { applyExtractionResult } from "@/lib/automation/apply";
+import { matchDealByText } from "@/lib/deals/match-by-text";
 
 // The paste-in intake path (FR-13): a WhatsApp export, a written summary of a
 // phone call, or any other note that never touched Gmail. Runs through the
@@ -110,12 +111,6 @@ export async function submitQuickCapture(
       message: `Saved, but extraction failed: ${err instanceof Error ? err.message : "unknown error"}. The note is stored and can be reprocessed later.`,
     };
   }
-}
-
-function matchDealByText<T extends { company: string }>(text: string, deals: T[]): T | null {
-  const lower = text.toLowerCase();
-  const sorted = [...deals].sort((a, b) => b.company.length - a.company.length);
-  return sorted.find((d) => lower.includes(d.company.toLowerCase())) ?? null;
 }
 
 function dealContextString(deal: {

@@ -121,6 +121,7 @@ model Signal {
   reasoning     String? // one-line rationale shown to the founder in the Approval Inbox
   suggestedServiceLine String? // FR-9: only for cross_sell signals - the AtliQ service line the model thinks fits
   leadSource           String? // only for new_lead signals - drives FR-12's New-vs-Qualified decision on approval
+  reviewerNote  String? // free-text note a founder can attach while an item is still pending - independent of the proposed value/date, saved without needing to Approve/Reject first
   createdAt     DateTime     @default(now())
   resolvedAt    DateTime?
   resolvedBy    String?

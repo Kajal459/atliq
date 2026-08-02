@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { QuickCaptureForm, type DealOption } from "./QuickCaptureBox";
 
-// Lives inside <main> in the dashboard layout (every page, not just Home) -
-// the inline section on Home is easy to miss below the charts, so this
-// gives a one-click way in from anywhere without scrolling or losing your
-// place. Sticky rather than fixed to the viewport on purpose: it rides
-// along near the bottom of the page while you scroll main content, but
-// naturally stops before it can sit on top of the footer, since it's
-// contained inside <main> rather than pinned to the whole screen.
+// Rendered inside the shared floating-launchers row in the dashboard layout
+// (every page, not just Home) - the inline section on Home is easy to miss
+// below the charts, so this gives a one-click way in from anywhere without
+// scrolling or losing your place. That row is sticky rather than fixed to
+// the viewport on purpose: it rides along near the bottom of the page while
+// you scroll main content, but naturally stops before it can sit on top of
+// the footer, since it's contained inside <main> rather than pinned to the
+// whole screen.
 export function QuickCaptureLauncher({
   owners,
   deals,
@@ -21,18 +22,16 @@ export function QuickCaptureLauncher({
 
   return (
     <>
-      <div className="sticky bottom-6 z-30 mt-8 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 rounded-full bg-forest-600 px-5 py-3 text-sm font-medium text-white shadow-lg hover:bg-forest-700"
-        >
-          <span aria-hidden className="text-base leading-none">
-            +
-          </span>
-          Quick capture
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 rounded-full bg-forest-600 px-5 py-3 text-sm font-medium text-white shadow-lg hover:bg-forest-700"
+      >
+        <span aria-hidden className="text-base leading-none">
+          +
+        </span>
+        Quick capture
+      </button>
 
       {open && (
         <div

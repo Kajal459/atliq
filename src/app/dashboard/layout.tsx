@@ -3,6 +3,7 @@ import { signOut } from "./actions";
 import { NavLinks } from "./_components/NavLinks";
 import { ConfirmButton } from "./_components/ConfirmButton";
 import { QuickCaptureLauncher } from "./_components/QuickCaptureLauncher";
+import { AskAssistantLauncher } from "./_components/AskAssistantLauncher";
 import { Footer } from "@/components/Footer";
 import { AtliqLogo } from "@/components/AtliqLogo";
 import { OWNERS } from "@/lib/automation/owner";
@@ -43,7 +44,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
         {children}
-        <QuickCaptureLauncher owners={OWNERS} deals={deals} />
+        <div className="sticky bottom-6 z-30 mt-8 flex justify-end gap-3">
+          <AskAssistantLauncher />
+          <QuickCaptureLauncher owners={OWNERS} deals={deals} />
+        </div>
       </main>
       <Footer />
     </div>

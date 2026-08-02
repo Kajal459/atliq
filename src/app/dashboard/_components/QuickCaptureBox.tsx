@@ -123,7 +123,16 @@ export function QuickCaptureForm({
         </div>
       </div>
 
-      {result && <p className={`mt-2 text-xs ${result.ok ? "text-forest-700" : "text-warn"}`}>{result.message}</p>}
+      {result && (
+        <div
+          className={`mt-3 flex items-start gap-2 rounded-lg border px-3 py-2 text-xs ${
+            result.ok ? "border-forest-100 bg-forest-50 text-forest-700" : "border-coral-100 bg-coral-50 text-coral-700"
+          }`}
+        >
+          <span className="mt-0.5">{result.ok ? "✓" : "!"}</span>
+          <p>{result.message}</p>
+        </div>
+      )}
     </div>
   );
 }

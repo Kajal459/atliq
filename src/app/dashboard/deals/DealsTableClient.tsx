@@ -145,11 +145,11 @@ export function DealsTableClient({ deals, owners }: { deals: DealRow[]; owners: 
                     <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">stale</span>
                   )}
                 </td>
-                <td className="px-4 py-2">{deal.stage}</td>
-                <td className="px-4 py-2">{deal.owner ?? <span className="text-gray-400">unassigned</span>}</td>
-                <td className="px-4 py-2">{deal.estValueUsd ? `$${deal.estValueUsd.toLocaleString()}` : "-"}</td>
-                <td className="px-4 py-2">{deal.nextFollowupDate ?? "-"}</td>
-                <td className="px-4 py-2 text-right text-xs text-gray-400">{deal.leadId}</td>
+                <td className="whitespace-nowrap px-4 py-2">{deal.stage}</td>
+                <td className="whitespace-nowrap px-4 py-2">{deal.owner ?? <span className="text-gray-400">unassigned</span>}</td>
+                <td className="whitespace-nowrap px-4 py-2">{deal.estValueUsd ? `$${deal.estValueUsd.toLocaleString()}` : "-"}</td>
+                <td className="whitespace-nowrap px-4 py-2">{deal.nextFollowupDate ?? "-"}</td>
+                <td className="whitespace-nowrap px-4 py-2 text-right text-xs text-gray-400">{deal.leadId}</td>
               </tr>
             ))}
           </tbody>
@@ -201,11 +201,11 @@ function SortableHeader({
 }) {
   const isActive = active === sortKey;
   return (
-    <th className="px-4 py-2">
+    <th className="whitespace-nowrap px-4 py-2">
       <button
         type="button"
         onClick={() => onClick(sortKey)}
-        className={`flex items-center gap-1 ${isActive ? "text-forest-700" : "text-gray-500"} hover:text-forest-700`}
+        className={`flex items-center gap-1 whitespace-nowrap ${isActive ? "text-forest-700" : "text-gray-500"} hover:text-forest-700`}
       >
         {label} {isActive ? (dir === 1 ? "↑" : "↓") : "⇅"}
       </button>
