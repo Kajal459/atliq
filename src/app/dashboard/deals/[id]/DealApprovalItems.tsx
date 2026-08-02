@@ -43,7 +43,7 @@ export function DealApprovalItems({
           className="rounded-lg border border-gray-300 px-2 py-1 text-xs"
         >
           <option value="" disabled>
-            Acting as...
+            Assigned to...
           </option>
           {owners.map((o) => (
             <option key={o} value={o}>
@@ -71,6 +71,8 @@ export function DealApprovalItems({
                 key={signal.id}
                 signal={signal}
                 actor={actor}
+                onActorChange={setActor}
+                owners={owners}
                 autoExpand={Boolean(highlightId) && signal.id === highlightId}
               />
             ))}

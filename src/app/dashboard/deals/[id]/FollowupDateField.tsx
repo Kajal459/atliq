@@ -58,7 +58,7 @@ export function FollowupDateField({
           className="rounded-lg border border-gray-300 px-1.5 py-1 text-xs text-gray-600"
         >
           <option value="" disabled>
-            Acting as...
+            Assigned to...
           </option>
           {owners.map((o) => (
             <option key={o} value={o}>

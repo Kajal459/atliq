@@ -36,3 +36,34 @@ export async function setDealFollowupDate(
 
   return { ok: true, message: date ? `Follow-up set to ${date}.` : "Follow-up cleared." };
 }
+
+// Assigns or reassigns which team member owns this deal - separate from
+// "acting as" (who is performing an action right now, for the audit log).
+// This is the actual Deal.owner column shown as the "Owner" field.
+export async function setDealOwner(
+  dealId: string,
+  owner: string,
+  actor: string
+): Promise<{ ok: boolean; message: string }> {
+  if (!actor) {
+    return { ok: false, message: "Select who is making this change first." };
+  }
+
+  const deal = await prisma.deal.findUnique({ where: { id: dealId }, select: { owner: true } });
+  await prisma.deal.update({ where: { id: dealId }, data: { owner } });
+  await prisma.auditLog.create({
+    data: {
+      dealId,
+      action: "owner_reassigned",
+      detail: deal?.owner ? `Owner changed from ${deal.owner} to ${owner}.` : `Owner set to ${owner}.`,
+      actor,
+    },
+  });
+
+  revalidatePath(`/dashboard/deals/${dealId}`);
+  revalidatePath("/dashboard/deals");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/digest");
+
+  return { ok: true, message: `Owner set to ${owner}.` };
+}

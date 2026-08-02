@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { HandoffBriefButton } from "../../_components/HandoffBriefButton";
 import { FollowupDateField } from "./FollowupDateField";
+import { OwnerField } from "./OwnerField";
 import { DealApprovalItems } from "./DealApprovalItems";
 import { DealScoreCard } from "./DealScoreCard";
 import { OWNERS } from "@/lib/automation/owner";
@@ -121,7 +122,7 @@ export default async function DealTimelinePage({
 
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <Field label="Stage" value={deal.stage} />
-          <Field label="Owner" value={deal.owner ?? "unassigned"} />
+          <OwnerField dealId={deal.id} initialValue={deal.owner ?? null} owners={OWNERS} />
           <Field label="Value" value={deal.estValueUsd ? `$${deal.estValueUsd.toLocaleString()}` : "-"} />
           <FollowupDateField
             dealId={deal.id}

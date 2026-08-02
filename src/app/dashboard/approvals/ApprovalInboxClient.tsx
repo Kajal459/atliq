@@ -106,6 +106,39 @@ function ScoreInfoIcon({ score, rationale }: { score: number | null; rationale: 
   );
 }
 
+// Inline "Assigned to" picker shown in place of a plain disabled hint - lets
+// someone assign themselves right where they are (inside an actions menu or
+// edit popup) instead of having to scroll back up to the toolbar control.
+function AssignedToPicker({
+  actor,
+  owners,
+  onActorChange,
+}: {
+  actor: string;
+  owners: readonly string[];
+  onActorChange: (value: string) => void;
+}) {
+  return (
+    <div className="px-3 py-1.5">
+      <label className="block text-[11px] text-gray-400">Assigned to</label>
+      <select
+        value={actor}
+        onChange={(e) => onActorChange(e.target.value)}
+        className="mt-1 w-full rounded-lg border border-gray-300 px-2 py-1 text-xs"
+      >
+        <option value="" disabled>
+          Choose...
+        </option>
+        {owners.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // Everything a search should be able to match against - not just the deal
 // name and headline, but the raw material behind the signal (the citation,
 // reasoning, source file, proposed/previous values, notes) so a founder can
@@ -286,9 +319,7 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
             onChange={(e) => setActor(e.target.value)}
             className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs"
           >
-            <option value="" disabled>
-              Acting as...
-            </option>
+            <option value="">All</option>
             {owners.map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -319,12 +350,21 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
             <tbody>
               {rows.map((row) =>
                 row.kind === "group" ? (
-                  <GroupedDealRow key={row.key} signals={row.group} actor={actor} highlightId={highlightId} />
+                  <GroupedDealRow
+                    key={row.key}
+                    signals={row.group}
+                    actor={actor}
+                    onActorChange={setActor}
+                    owners={owners}
+                    highlightId={highlightId}
+                  />
                 ) : (
                   <ApprovalRow
                     key={row.key}
                     signal={row.signal}
                     actor={actor}
+                    onActorChange={setActor}
+                    owners={owners}
                     autoExpand={row.signal.id === highlightId}
                   />
                 )
@@ -345,10 +385,14 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
 function GroupedDealRow({
   signals,
   actor,
+  onActorChange,
+  owners,
   highlightId,
 }: {
   signals: PendingSignal[];
   actor: string;
+  onActorChange: (value: string) => void;
+  owners: readonly string[];
   highlightId: string | null;
 }) {
   // "Most recent" - signals arrive here already sorted most-recent-first, so
@@ -400,8 +444,13 @@ function GroupedDealRow({
     });
   }
 
+  // Disabled state is spelled out with an explicit gray text color, not just
+  // reduced opacity - a lighter color like the "Approve edit" forest-600
+  // washed out to gray at 50% opacity, while a bolder one like "Approve"
+  // stayed legible, making the two look inconsistently disabled even though
+  // both are equally blocked on picking "Acting as" first.
   const menuItemClass =
-    "block w-full rounded-lg px-3 py-2 text-left text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50";
+    "block w-full rounded-lg px-3 py-2 text-left text-xs font-medium disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent";
 
   return (
     <tr
@@ -464,7 +513,7 @@ function GroupedDealRow({
 
           {menuOpen && (
             <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-cream-100 bg-white p-1.5 shadow-lg">
-              {!actor && <p className="px-3 py-1.5 text-[11px] text-gray-400">Pick &quot;Acting as&quot; first.</p>}
+              {!actor && <AssignedToPicker actor={actor} owners={owners} onActorChange={onActorChange} />}
               <Link
                 href={`/dashboard/deals/${dealId}`}
                 className={`${menuItemClass} text-gray-600 hover:bg-gray-50`}
@@ -503,10 +552,14 @@ function GroupedDealRow({
 export function ApprovalRow({
   signal,
   actor,
+  onActorChange,
+  owners,
   autoExpand,
 }: {
   signal: PendingSignal;
   actor: string;
+  onActorChange: (value: string) => void;
+  owners: readonly string[];
   autoExpand?: boolean;
 }) {
   const meta = SIGNAL_TYPE_META[signal.type] ?? { icon: "•", label: signal.type.replace(/_/g, " ") };
@@ -583,8 +636,13 @@ export function ApprovalRow({
     setMenuOpen(false);
   }
 
+  // Disabled state is spelled out with an explicit gray text color, not just
+  // reduced opacity - a lighter color like the "Approve edit" forest-600
+  // washed out to gray at 50% opacity, while a bolder one like "Approve"
+  // stayed legible, making the two look inconsistently disabled even though
+  // both are equally blocked on picking "Acting as" first.
   const menuItemClass =
-    "block w-full rounded-lg px-3 py-2 text-left text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50";
+    "block w-full rounded-lg px-3 py-2 text-left text-xs font-medium disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent";
 
   return (
     <>
@@ -657,7 +715,7 @@ export function ApprovalRow({
 
             {menuOpen && (
               <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-cream-100 bg-white p-1.5 shadow-lg">
-                {!actor && <p className="px-3 py-1.5 text-[11px] text-gray-400">Pick &quot;Acting as&quot; first.</p>}
+                {!actor && <AssignedToPicker actor={actor} owners={owners} onActorChange={onActorChange} />}
                 <button type="button" onClick={openCommentModal} className={`${menuItemClass} text-gray-600 hover:bg-gray-50`}>
                   💬 Comment
                 </button>
@@ -814,7 +872,7 @@ export function ApprovalRow({
 
                 <div className="mt-4 flex items-center justify-between gap-2">
                   {!actor ? (
-                    <p className="text-[11px] text-gray-400">Pick &quot;Acting as&quot; above first.</p>
+                    <AssignedToPicker actor={actor} owners={owners} onActorChange={onActorChange} />
                   ) : (
                     <span />
                   )}
