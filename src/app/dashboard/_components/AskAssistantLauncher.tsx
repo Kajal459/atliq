@@ -35,7 +35,7 @@ export function AskAssistantLauncher() {
         className="flex items-center gap-2 rounded-full border border-forest-600 bg-white px-5 py-3 text-sm font-medium text-forest-700 shadow-lg hover:bg-forest-50"
       >
         <ChatIcon className="h-4 w-4" />
-        Ask AtliQ
+        AtliQ AI
       </button>
 
       {open && (
@@ -49,7 +49,7 @@ export function AskAssistantLauncher() {
           >
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="font-serif text-lg italic text-ink">Ask AtliQ</h2>
+                <h2 className="font-serif text-lg italic text-ink">AtliQ AI</h2>
                 <p className="mt-0.5 text-xs text-gray-500">
                   Ask about any deal by name - e.g. &quot;what&apos;s the status of Meridian?&quot;
                 </p>

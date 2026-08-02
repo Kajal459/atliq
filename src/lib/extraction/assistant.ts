@@ -1,6 +1,6 @@
 import { getAnthropicClient, MODEL } from "@/lib/anthropic";
 
-// The "Ask AtliQ" chat launcher's only AI call - answers a founder's
+// The "AtliQ AI" chat launcher's only AI call - answers a founder's
 // free-text question about one specific deal. Deliberately narrow (one deal,
 // grounded in its own CRM record + activity + approvals + audit history)
 // rather than an open-ended pipeline chatbot, so every answer stays

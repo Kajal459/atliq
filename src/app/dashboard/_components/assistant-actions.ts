@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { matchAllDealsByText } from "@/lib/deals/match-by-text";
 import { answerDealQuestion } from "@/lib/extraction/assistant";
 
-// Backs the "Ask AtliQ" chat launcher. Deliberately deterministic about
+// Backs the "AtliQ AI" chat launcher. Deliberately deterministic about
 // which deal it's answering for - the company name has to actually appear
 // in the question, same matching rule Quick Capture uses - so the AI call
 // itself only ever sees one grounded deal's data, never a guess across the
