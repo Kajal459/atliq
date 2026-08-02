@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { buildDashboardOverview } from "@/lib/dashboard/overview";
+import { buildWeeklyDigest } from "@/lib/digest/buckets";
 import { OWNERS } from "@/lib/automation/owner";
 import { QuickCaptureBox } from "./_components/QuickCaptureBox";
 import { prisma } from "@/lib/db";
@@ -12,6 +13,7 @@ function formatUsd(value: number): string {
 
 export default async function DashboardHomePage() {
   const o = await buildDashboardOverview();
+  const digest = await buildWeeklyDigest();
   const deals = await prisma.deal.findMany({
     where: { mergedIntoDealId: null },
     select: { id: true, company: true },
@@ -20,11 +22,53 @@ export default async function DashboardHomePage() {
   const maxStageCount = Math.max(1, ...o.stageBreakdown.map((s) => s.count));
   const maxOwnerCount = Math.max(1, ...o.ownerBreakdown.map((s) => s.count));
 
+  const todayFollowups = digest.buckets.today;
+  const hasTodayTasks = todayFollowups.length > 0 || o.pendingApprovalCount > 0 || o.needsReviewCount > 0;
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-serif text-2xl italic text-ink">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">The state of the book, at a glance - the numbers behind the digest.</p>
+      </div>
+
+      {/* Today's tasks - everything that's actually due right now, pulled
+          from the same deterministic digest buckets used by the Weekly
+          Digest and the daily email, so this list never drifts from those. */}
+      <div className="rounded-xl border border-cream-100 bg-white p-5">
+        <h2 className="text-sm font-bold uppercase tracking-wide text-gray-500">Today</h2>
+        {!hasTodayTasks ? (
+          <p className="mt-2 text-sm text-gray-500">Nothing needs your attention today.</p>
+        ) : (
+          <ul className="mt-3 space-y-2.5">
+            {todayFollowups.map((item) => (
+              <li key={item.dealId} className="flex items-start gap-2.5 text-sm">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-forest-600" aria-hidden />
+                <Link href={`/dashboard/deals/${item.dealId}`} className="text-ink hover:underline">
+                  <span className="font-medium">{item.company}</span> — {item.reason.toLowerCase()}
+                </Link>
+              </li>
+            ))}
+            {o.pendingApprovalCount > 0 && (
+              <li className="flex items-start gap-2.5 text-sm">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-forest-600" aria-hidden />
+                <Link href="/dashboard/approvals" className="text-ink hover:underline">
+                  <span className="font-medium">{o.pendingApprovalCount}</span> item
+                  {o.pendingApprovalCount === 1 ? "" : "s"} waiting in the Approval Inbox
+                </Link>
+              </li>
+            )}
+            {o.needsReviewCount > 0 && (
+              <li className="flex items-start gap-2.5 text-sm">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600" aria-hidden />
+                <Link href="/dashboard/digest" className="text-ink hover:underline">
+                  <span className="font-medium">{o.needsReviewCount}</span> deal
+                  {o.needsReviewCount === 1 ? "" : "s"} moved backward and need a look
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
       {/* Headline KPIs */}
@@ -42,16 +86,6 @@ export default async function DashboardHomePage() {
           sub={`${o.wonCount} won · ${o.lostCount} lost`}
         />
       </div>
-
-      {o.needsReviewCount > 0 && (
-        <p className="border-l-2 border-amber-600 py-1 pl-4 text-sm text-ink">
-          {o.needsReviewCount} deal{o.needsReviewCount === 1 ? "" : "s"} moved backward and need a look - see the{" "}
-          <Link href="/dashboard/digest" className="font-medium text-forest-700 underline">
-            Weekly Digest
-          </Link>
-          .
-        </p>
-      )}
 
       <div className="grid gap-8 sm:grid-cols-2">
         {/* Pipeline by stage */}

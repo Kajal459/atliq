@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { buildWeeklyDigest, type DigestBucket, type DigestItem } from "@/lib/digest/buckets";
 import { HandoffBriefButton } from "../_components/HandoffBriefButton";
+import { SIGNAL_TYPE_META, SIGNAL_TYPE_PRIORITY, headlineForSignal } from "@/lib/automation/describe-signal";
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,28 @@ export default async function WeeklyDigestPage() {
   const digest = await buildWeeklyDigest();
   const totalItems = Object.values(digest.buckets).reduce((sum, items) => sum + items.length, 0);
 
+  // The single most urgent item waiting in the Approval Inbox - highest
+  // signal-type priority first, most recent as the tie-break - surfaced
+  // here so it doesn't require a trip to the inbox to spot it.
+  const pendingSignals = await prisma.signal.findMany({
+    where: { status: "pending" },
+    include: { deal: { select: { company: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  let topSignal: (typeof pendingSignals)[number] | null = null;
+  for (const s of pendingSignals) {
+    if (!topSignal) {
+      topSignal = s;
+      continue;
+    }
+    const bestPriority = SIGNAL_TYPE_PRIORITY[topSignal.type] ?? 9;
+    const priority = SIGNAL_TYPE_PRIORITY[s.type] ?? 9;
+    if (priority < bestPriority || (priority === bestPriority && s.createdAt > topSignal.createdAt)) {
+      topSignal = s;
+    }
+  }
+  const topSignalMeta = topSignal ? SIGNAL_TYPE_META[topSignal.type] : null;
+
   return (
     <div className="space-y-8">
       <div>
@@ -34,6 +58,32 @@ export default async function WeeklyDigestPage() {
           <HandoffBriefButton scope="pipeline" label="Generate pipeline handoff brief" />
         </div>
       </div>
+
+      {/* Highest priority - the one item most worth looking at right now.
+          Clicking takes you straight to it in the Approval Inbox, already
+          expanded, instead of leaving you to hunt for it in the list. */}
+      {topSignal && (
+        <Link
+          href={`/dashboard/approvals?signal=${topSignal.id}`}
+          className="block rounded-xl border border-amber-200 bg-amber-50 p-4 transition-colors hover:bg-amber-100/60"
+        >
+          <p className="text-xs font-bold uppercase tracking-wide text-amber-800">
+            {topSignalMeta?.icon ?? "•"} Highest priority
+          </p>
+          <p className="mt-1 font-medium text-ink">
+            {headlineForSignal({
+              type: topSignal.type,
+              field: topSignal.field,
+              proposedValue: topSignal.proposedValue,
+              previousValue: topSignal.previousValue,
+              leadSource: topSignal.leadSource,
+              suggestedServiceLine: topSignal.suggestedServiceLine,
+              deal: topSignal.deal,
+            })}
+          </p>
+          <p className="mt-1 text-xs text-amber-700">Click to review and approve →</p>
+        </Link>
+      )}
 
       {digest.atRiskDealCount > 0 && (
         <div className="rounded-2xl bg-forest-700 p-5 text-white">

@@ -80,6 +80,13 @@ model Deal {
   staleSince       DateTime?
   mergedIntoDealId String? // if this record was merged into another (duplicate), points at the surviving record
 
+  // AI-estimated 0-100 likelihood of closing Won, generated on demand from
+  // the deal's full timeline (events + audit history) - not recomputed on
+  // every page view, only when a founder asks for a fresh read.
+  successScore          Int?
+  successScoreRationale String?
+  successScoreUpdatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

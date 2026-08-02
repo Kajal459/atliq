@@ -100,7 +100,9 @@ async function applyApprovedSignal(
       prisma.auditLog.create({
         data: {
           action: "approval_approved_no_deal",
-          detail: `${actor} approved ${signal.type} with no linked deal - "${signal.citationQuote}"`,
+          detail: `${actor} ${newStatus === "edited" ? "edited and approved" : "approved"} ${signal.type} with no linked deal${
+            newStatus === "edited" ? ` - updated to: "${finalValue}"` : ""
+          } - "${signal.citationQuote}"`,
           actor,
         },
       }),
@@ -128,7 +130,13 @@ async function applyApprovedSignal(
       data: {
         dealId: signal.dealId,
         action: "approval_approved",
-        detail: `${actor} ${newStatus === "edited" ? "edited and approved" : "approved"}: ${signal.type} ${signal.field ? `(${signal.field} -> ${finalValue})` : ""} - "${signal.citationQuote}"`,
+        detail: `${actor} ${newStatus === "edited" ? "edited and approved" : "approved"}: ${signal.type}${
+          newStatus === "edited"
+            ? ` - updated to: "${finalValue}"`
+            : signal.field
+              ? ` (${signal.field} -> ${finalValue})`
+              : ""
+        } - "${signal.citationQuote}"`,
         actor,
       },
     }),

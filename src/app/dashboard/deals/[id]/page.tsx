@@ -2,7 +2,11 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { HandoffBriefButton } from "../../_components/HandoffBriefButton";
 import { FollowupDateField } from "./FollowupDateField";
+import { DealApprovalItems } from "./DealApprovalItems";
+import { DealScoreCard } from "./DealScoreCard";
 import { OWNERS } from "@/lib/automation/owner";
+import { headlineForSignal } from "@/lib/automation/describe-signal";
+import type { PendingSignal } from "../../approvals/ApprovalInboxClient";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +19,43 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
     },
   });
   if (!deal) notFound();
+
+  const pendingDealSignals = await prisma.signal.findMany({
+    where: { dealId: deal.id, status: "pending" },
+    include: { sourceEvent: { select: { filename: true, subject: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const pendingItems: PendingSignal[] = pendingDealSignals.map((s) => ({
+    id: s.id,
+    dealId: deal.id,
+    type: s.type,
+    field: s.field,
+    proposedValue: s.proposedValue,
+    previousValue: s.previousValue,
+    citationQuote: s.citationQuote,
+    confidence: s.confidence,
+    reasoning: s.reasoning,
+    suggestedServiceLine: s.suggestedServiceLine,
+    leadSource: s.leadSource,
+    reviewerNote: s.reviewerNote,
+    company: deal.company,
+    successScore: deal.successScore ?? null,
+    lastActivityDate: deal.lastContactDate?.toISOString().slice(0, 10) ?? null,
+    source: deal.source ?? null,
+    serviceInterest: deal.serviceInterest ?? null,
+    sourceFilename: s.sourceEvent?.filename ?? null,
+    sourceSubject: s.sourceEvent?.subject ?? null,
+    headline: headlineForSignal({
+      type: s.type,
+      field: s.field,
+      proposedValue: s.proposedValue,
+      previousValue: s.previousValue,
+      leadSource: s.leadSource,
+      suggestedServiceLine: s.suggestedServiceLine,
+      deal: { company: deal.company },
+    }),
+  }));
 
   type TimelineEntry =
     | { kind: "event"; at: Date; data: (typeof deal.sourceEvents)[number] }
@@ -41,7 +82,17 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
             </span>
           )}
         </div>
-        <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+
+        <div className="mt-4">
+          <DealScoreCard
+            dealId={deal.id}
+            score={deal.successScore}
+            rationale={deal.successScoreRationale}
+            updatedAt={deal.successScoreUpdatedAt?.toISOString().slice(0, 10) ?? null}
+          />
+        </div>
+
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <Field label="Stage" value={deal.stage} />
           <Field label="Owner" value={deal.owner ?? "unassigned"} />
           <Field label="Value" value={deal.estValueUsd ? `$${deal.estValueUsd.toLocaleString()}` : "-"} />
@@ -59,6 +110,8 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
           <HandoffBriefButton scope="deal" dealId={deal.id} label="Generate handoff brief" />
         </div>
       </div>
+
+      <DealApprovalItems signals={pendingItems} owners={OWNERS} />
 
       <div>
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">Timeline</h2>
