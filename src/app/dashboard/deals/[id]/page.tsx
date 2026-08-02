@@ -10,7 +10,13 @@ import type { PendingSignal } from "../../approvals/ApprovalInboxClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function DealTimelinePage({ params }: { params: { id: string } }) {
+export default async function DealTimelinePage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { signal?: string };
+}) {
   const deal = await prisma.deal.findUnique({
     where: { id: params.id },
     include: {
@@ -41,6 +47,7 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
     reviewerNote: s.reviewerNote,
     company: deal.company,
     successScore: deal.successScore ?? null,
+    successScoreRationale: deal.successScoreRationale ?? null,
     lastActivityDate: deal.lastContactDate?.toISOString().slice(0, 10) ?? null,
     source: deal.source ?? null,
     serviceInterest: deal.serviceInterest ?? null,
@@ -73,7 +80,27 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
       <div className="rounded-xl border border-cream-100 bg-white p-5">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="font-serif text-2xl text-ink">{deal.company}</h1>
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-serif text-2xl text-ink">{deal.company}</h1>
+              <span
+                title={
+                  deal.successScore != null
+                    ? `AI success score: ${deal.successScore}/100${
+                        deal.successScoreRationale ? ` - ${deal.successScoreRationale}` : ""
+                      }`
+                    : "No AI success score yet - generate one below."
+                }
+                className="inline-flex cursor-help items-center justify-center rounded-full text-gray-400 hover:text-forest-600"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a1 1 0 0 0 0 2h.01v3a1 1 0 0 0 1 1H11a1 1 0 1 0 0-2v-3a1 1 0 0 0-1-1H9Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </span>
+            </div>
             <p className="text-sm text-gray-500">{deal.leadId} - {deal.serviceInterest ?? "unknown service interest"}</p>
           </div>
           {deal.stale && (
@@ -111,7 +138,7 @@ export default async function DealTimelinePage({ params }: { params: { id: strin
         </div>
       </div>
 
-      <DealApprovalItems signals={pendingItems} owners={OWNERS} />
+      <DealApprovalItems signals={pendingItems} owners={OWNERS} highlightId={searchParams.signal ?? null} />
 
       <div>
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wide text-gray-500">Timeline</h2>

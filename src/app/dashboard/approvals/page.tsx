@@ -14,6 +14,7 @@ type SignalWithRelations = Awaited<ReturnType<typeof prisma.signal.findMany>>[nu
     source: string | null;
     serviceInterest: string | null;
     successScore: number | null;
+    successScoreRationale: string | null;
   } | null;
   sourceEvent: { filename: string | null; subject: string | null } | null;
 };
@@ -46,6 +47,7 @@ export default async function ApprovalInboxPage() {
     reviewerNote: s.reviewerNote,
     company: s.deal?.company ?? null,
     successScore: s.deal?.successScore ?? null,
+    successScoreRationale: s.deal?.successScoreRationale ?? null,
     lastActivityDate: s.deal?.lastContactDate?.toISOString().slice(0, 10) ?? null,
     source: s.deal?.source ?? null,
     serviceInterest: s.deal?.serviceInterest ?? null,

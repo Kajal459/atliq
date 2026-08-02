@@ -60,11 +60,17 @@ export default async function WeeklyDigestPage() {
       </div>
 
       {/* Highest priority - the one item most worth looking at right now.
-          Clicking takes you straight to it in the Approval Inbox, already
-          expanded, instead of leaving you to hunt for it in the list. */}
+          If it's tied to a deal, go straight to that deal's own approval
+          row (that's where individual messages live now); otherwise fall
+          back to the Approval Inbox, since an unmatched signal has no deal
+          page to land on. */}
       {topSignal && (
         <Link
-          href={`/dashboard/approvals?signal=${topSignal.id}`}
+          href={
+            topSignal.dealId
+              ? `/dashboard/deals/${topSignal.dealId}?signal=${topSignal.id}`
+              : `/dashboard/approvals?signal=${topSignal.id}`
+          }
           className="block rounded-xl border border-amber-200 bg-amber-50 p-4 transition-colors hover:bg-amber-100/60"
         >
           <p className="text-xs font-bold uppercase tracking-wide text-amber-800">

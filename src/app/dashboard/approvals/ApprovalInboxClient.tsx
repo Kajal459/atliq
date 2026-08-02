@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { SIGNAL_TYPE_META } from "@/lib/automation/describe-signal";
-import { submitApproval, saveReviewerNote } from "./actions";
+import { submitApproval, submitBulkApproval, submitBulkReject, saveReviewerNote } from "./actions";
 import { ConfirmButton } from "../_components/ConfirmButton";
 
 export interface PendingSignal {
@@ -22,6 +22,7 @@ export interface PendingSignal {
   reviewerNote: string | null;
   company: string | null;
   successScore: number | null;
+  successScoreRationale: string | null;
   lastActivityDate: string | null;
   source: string | null;
   serviceInterest: string | null;
@@ -49,12 +50,60 @@ function formatDate(value: string | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-// Same green/amber/red bands as the deal page's success-score card, just
-// compact enough to sit as a tag next to a deal name in the table.
-function scoreTagClass(score: number): string {
-  if (score >= 70) return "bg-forest-50 text-forest-700";
-  if (score >= 40) return "bg-amber-50 text-amber-800";
-  return "bg-coral-50 text-coral-700";
+// Info icon next to a deal name - click to see the AI success score and its
+// one-line reason (same wording as the deal page). A click-to-open popover
+// rather than a bare title tooltip, since title tooltips are easy to miss
+// and don't work at all on touch devices.
+function ScoreInfoIcon({ score, rationale }: { score: number | null; rationale: string | null }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div className="relative inline-flex" ref={ref}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        aria-label="AI success score"
+        className="inline-flex shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-forest-600"
+      >
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a1 1 0 0 0 0 2h.01v3a1 1 0 0 0 1 1H11a1 1 0 1 0 0-2v-3a1 1 0 0 0-1-1H9Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute left-0 top-full z-30 mt-1 w-64 rounded-xl border border-cream-100 bg-white p-3 text-left text-xs normal-case shadow-lg"
+        >
+          {score != null ? (
+            <>
+              <p className="font-bold text-ink">AI success score: {score}/100</p>
+              {rationale && <p className="mt-1 text-gray-600">{rationale}</p>}
+            </>
+          ) : (
+            <p className="text-gray-500">No AI success score yet - open the deal to generate one.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Everything a search should be able to match against - not just the deal
@@ -126,6 +175,35 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
     if (!q) return byService;
     return byService.filter((s) => searchableText(s).includes(q));
   }, [signals, filter, sourceFilter, serviceFilter, search]);
+
+  // Multiple pending signals on the same client collapse into one summary
+  // row here - the full per-message list (with individual approve/reject/
+  // edit) lives on that deal's own page instead. Signals with no matched
+  // deal yet (e.g. a brand-new lead) can't be grouped, so they still show
+  // individually, in full. Order follows `filtered`, which is already
+  // most-recent-first, so each group appears at its most recent signal's
+  // position.
+  const rows = useMemo(() => {
+    const seen = new Set<string>();
+    const result: (
+      | { kind: "group"; key: string; group: PendingSignal[] }
+      | { kind: "single"; key: string; signal: PendingSignal }
+    )[] = [];
+    for (const signal of filtered) {
+      if (signal.dealId) {
+        if (seen.has(signal.dealId)) continue;
+        seen.add(signal.dealId);
+        result.push({
+          kind: "group",
+          key: signal.dealId,
+          group: filtered.filter((s) => s.dealId === signal.dealId),
+        });
+      } else {
+        result.push({ kind: "single", key: signal.id, signal });
+      }
+    }
+    return result;
+  }, [filtered]);
 
   if (signals.length === 0) {
     return (
@@ -239,14 +317,186 @@ export function ApprovalInboxClient({ signals, owners }: { signals: PendingSigna
               </tr>
             </thead>
             <tbody>
-              {filtered.map((signal) => (
-                <ApprovalRow key={signal.id} signal={signal} actor={actor} autoExpand={signal.id === highlightId} />
-              ))}
+              {rows.map((row) =>
+                row.kind === "group" ? (
+                  <GroupedDealRow key={row.key} signals={row.group} actor={actor} highlightId={highlightId} />
+                ) : (
+                  <ApprovalRow
+                    key={row.key}
+                    signal={row.signal}
+                    actor={actor}
+                    autoExpand={row.signal.id === highlightId}
+                  />
+                )
+              )}
             </tbody>
           </table>
         </div>
       )}
     </div>
+  );
+}
+
+// One row per client on the main Approval Inbox - the "what needs to be
+// done" summary, not the individual messages themselves. "Approve all"
+// submits every pending signal for this deal exactly as AI-proposed; anyone
+// who wants to edit or reject just one of them clicks through to the deal
+// page instead, where each message keeps its own full row.
+function GroupedDealRow({
+  signals,
+  actor,
+  highlightId,
+}: {
+  signals: PendingSignal[];
+  actor: string;
+  highlightId: string | null;
+}) {
+  // "Most recent" - signals arrive here already sorted most-recent-first, so
+  // the first one drives the Type and Message columns, same as an
+  // individual row. The rest of the group is summarized as a count.
+  const first = signals[0];
+  const dealId = first.dealId!;
+  const meta = SIGNAL_TYPE_META[first.type] ?? { icon: "•", label: first.type.replace(/_/g, " ") };
+  const extraCount = signals.length - 1;
+  const isHighlighted = signals.some((s) => s.id === highlightId);
+  const [submitting, startSubmitting] = useTransition();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rowRef = useRef<HTMLTableRowElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isHighlighted) {
+      rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
+
+  function approveAll() {
+    startSubmitting(async () => {
+      await submitBulkApproval(
+        signals.map((s) => s.id),
+        actor
+      );
+      setMenuOpen(false);
+    });
+  }
+
+  function rejectAll() {
+    startSubmitting(async () => {
+      await submitBulkReject(
+        signals.map((s) => s.id),
+        actor
+      );
+      setMenuOpen(false);
+    });
+  }
+
+  const menuItemClass =
+    "block w-full rounded-lg px-3 py-2 text-left text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50";
+
+  return (
+    <tr
+      ref={rowRef}
+      className={`border-b border-cream-100 align-top transition-colors last:border-b-0 hover:bg-cream-50/40 ${
+        isHighlighted ? "bg-forest-50/60 ring-1 ring-inset ring-forest-200" : ""
+      }`}
+    >
+      <td className="px-4 py-3.5 font-medium text-ink">
+        <div className="flex items-center gap-1.5">
+          <Link href={`/dashboard/deals/${dealId}`} className="hover:underline">
+            {first.company ?? "Unmatched"}
+          </Link>
+          <ScoreInfoIcon score={first.successScore} rationale={first.successScoreRationale} />
+        </div>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-forest-700">
+          {meta.icon} {meta.label}
+        </span>
+        {first.confidence === "low" && (
+          <span className="mt-1 block whitespace-nowrap rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+            low confidence
+          </span>
+        )}
+      </td>
+      <td className="min-w-[220px] max-w-xs px-4 py-3.5">
+        <p className="leading-snug text-ink">{first.headline}</p>
+        {extraCount > 0 && (
+          <p className="mt-1 text-xs text-gray-500">
+            +{extraCount} more item{extraCount === 1 ? "" : "s"} waiting
+          </p>
+        )}
+        <Link
+          href={`/dashboard/deals/${dealId}`}
+          className="mt-1.5 inline-block text-xs font-medium text-forest-600 hover:underline"
+        >
+          Review individually →
+        </Link>
+      </td>
+      <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{formatDate(first.lastActivityDate)}</td>
+      <td className="whitespace-nowrap px-4 py-3.5 text-gray-600">{first.source ?? "—"}</td>
+      <td className="max-w-[160px] truncate px-4 py-3.5 text-gray-600" title={first.serviceInterest ?? undefined}>
+        {first.serviceInterest ?? "—"}
+      </td>
+      <td className="px-4 py-3.5 text-right">
+        <div className="relative inline-block text-left" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Actions"
+            className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+              <circle cx="10" cy="4" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+              <circle cx="10" cy="16" r="1.5" />
+            </svg>
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 top-full z-20 mt-1 w-52 rounded-xl border border-cream-100 bg-white p-1.5 shadow-lg">
+              {!actor && <p className="px-3 py-1.5 text-[11px] text-gray-400">Pick &quot;Acting as&quot; first.</p>}
+              <Link
+                href={`/dashboard/deals/${dealId}`}
+                className={`${menuItemClass} text-gray-600 hover:bg-gray-50`}
+              >
+                ↗ Review individually
+              </Link>
+              <ConfirmButton
+                label={submitting ? "Working..." : `✕ Reject all (${signals.length})`}
+                confirmText={`Reject all ${signals.length} pending item${signals.length === 1 ? "" : "s"} for ${
+                  first.company ?? "this deal"
+                }${actor ? ` as ${actor}` : ""}? Each is removed from the queue and logged either way.`}
+                confirmLabel="Reject all"
+                tone="danger"
+                disabled={!actor || submitting}
+                onConfirm={rejectAll}
+                className={`${menuItemClass} text-coral-700 hover:bg-coral-50`}
+              />
+              <ConfirmButton
+                label={submitting ? "Working..." : `✓ Approve all (${signals.length})`}
+                confirmText={`Approve all ${signals.length} pending item${signals.length === 1 ? "" : "s"} for ${
+                  first.company ?? "this deal"
+                }${actor ? ` as ${actor}` : ""}? Each applies with its own AI-proposed value - review individually on the deal page instead if any need edits first.`}
+                confirmLabel="Approve all"
+                disabled={!actor || submitting}
+                onConfirm={approveAll}
+                className={`${menuItemClass} font-semibold text-forest-700 hover:bg-forest-50`}
+              />
+            </div>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -346,14 +596,6 @@ export function ApprovalRow({
       >
         <td className="px-4 py-3.5 font-medium text-ink">
           <div className="flex items-center gap-1.5">
-            {signal.successScore != null && (
-              <span
-                title={`AI success score: ${signal.successScore}/100`}
-                className={`inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold ${scoreTagClass(signal.successScore)}`}
-              >
-                {signal.successScore}
-              </span>
-            )}
             {signal.dealId ? (
               <Link href={`/dashboard/deals/${signal.dealId}`} className="hover:underline">
                 {signal.company ?? "Unmatched"}
@@ -361,6 +603,7 @@ export function ApprovalRow({
             ) : (
               <span className="text-gray-400">{signal.company ?? "Unmatched"}</span>
             )}
+            {signal.dealId && <ScoreInfoIcon score={signal.successScore} rationale={signal.successScoreRationale} />}
           </div>
         </td>
         <td className="whitespace-nowrap px-4 py-3.5">
@@ -378,7 +621,7 @@ export function ApprovalRow({
 
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <button type="button" onClick={() => setExpanded((v) => !v)} className="text-xs font-medium text-forest-600">
-              {expanded ? "Hide details" : "Why is this here?"}
+              {expanded ? "Show less" : "Read More"}
             </button>
             {note && (
               <button
@@ -463,7 +706,7 @@ export function ApprovalRow({
       )}
       {commentOpen && (
         <tr>
-          <td colSpan={6} className="p-0">
+          <td colSpan={7} className="p-0">
             <div
               className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
               onClick={() => !savingNote && setCommentOpen(false)}

@@ -9,7 +9,15 @@ const ACTOR_STORAGE_KEY = "atliq-actor";
 // items right from the Deal Timeline page - same row UI (and same editable
 // message + full actions) as the Approval Inbox, just reused here so the two
 // surfaces never drift apart.
-export function DealApprovalItems({ signals, owners }: { signals: PendingSignal[]; owners: readonly string[] }) {
+export function DealApprovalItems({
+  signals,
+  owners,
+  highlightId,
+}: {
+  signals: PendingSignal[];
+  owners: readonly string[];
+  highlightId?: string | null;
+}) {
   const [actor, setActor] = useState("");
 
   useEffect(() => {
@@ -59,7 +67,12 @@ export function DealApprovalItems({ signals, owners }: { signals: PendingSignal[
           </thead>
           <tbody>
             {signals.map((signal) => (
-              <ApprovalRow key={signal.id} signal={signal} actor={actor} />
+              <ApprovalRow
+                key={signal.id}
+                signal={signal}
+                actor={actor}
+                autoExpand={Boolean(highlightId) && signal.id === highlightId}
+              />
             ))}
           </tbody>
         </table>
