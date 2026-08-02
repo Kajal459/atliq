@@ -55,6 +55,7 @@ export default function LoginPage({
               >
                 Sign in
               </button>
+              <p className="text-center text-xs text-gray-400">Demo Password: Admin123$</p>
             </form>
           </div>
         </div>

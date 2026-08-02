@@ -37,13 +37,41 @@ deploying machine, or ask Kajal).
     "What got removed" below. Quick capture covers the same "channel that
     isn't wired to a connector" need without the OAuth/verification
     overhead.)*
-- **Approval Inbox** (`src/app/dashboard/approvals/`) - type-filterable list
-  of everything waiting on a human, with the citation quote and model's
-  reasoning behind a "Why is this here?" disclosure, edit-before-approve for
-  proposed values, and a confirmation popup before every Approve/Reject.
+- **Approval Inbox** (`src/app/dashboard/approvals/`) - signals with a
+  matched deal collapse into one summary row per client (most-recent
+  type/message, an info icon showing the AI success score and its rationale,
+  a "Reject all / Approve all / Review individually" 3-dot menu); signals
+  with no matched deal yet still show individually, in full. Filterable by
+  type, source, and service interest, with a big search box that also
+  matches raw source text, most-recent-first, and a "Read More" disclosure
+  for the model's reasoning behind each item.
+- **Deal Timeline page** doubles as the full per-message approval surface -
+  every pending signal for that one deal (with edit-before-approve, a popup
+  editor for free-text messages, and a comment popup) lives here, so
+  approving or rejecting one message only ever affects that message, not the
+  whole client.
+- **AI deal success score** (`src/lib/extraction/success-score.ts`) -
+  on-demand (not automatic, to control cost) Claude call that reads a deal's
+  full timeline - source events plus every audit-log entry - and scores it
+  0-100 with a rationale, shown on the deal page (`DealScoreCard.tsx`) and as
+  a click-to-open info popover next to the company name in the Approval
+  Inbox.
+- **Ask AtliQ** (`src/lib/extraction/assistant.ts`,
+  `AskAssistantLauncher.tsx`) - a chat launcher available on every dashboard
+  page that answers plain-language questions about deal status, grounded
+  only in that deal's actual CRM record, source events, and audit log - it
+  says so explicitly rather than guessing when the data doesn't cover the
+  question.
+- **Editable deal Owner** (`OwnerField.tsx`) - the Owner field on a deal page
+  can be assigned or reassigned to any of the four team members directly,
+  with a confirm step and an audit-log entry recording who changed it and
+  when - previously read-only display text.
 - **Weekly Digest** (`src/app/dashboard/digest/`) - time-horizon buckets
-  (due today, due in 2 weeks, needs review, stale, later) plus a
-  pipeline-value-at-risk banner.
+  (due today, due in 2 weeks, needs review, stale, later), a
+  pipeline-value-at-risk banner, and a "Highest priority" callout for the
+  single most urgent pending signal that deep-links straight to that item,
+  already expanded, on the deal page (or the Approval Inbox, if it has no
+  matched deal yet).
 - **Deal Timeline** (`src/app/dashboard/deals/`) - sortable/filterable table
   of every open deal, and a per-deal page showing the full source-event +
   audit-log history with citations.
@@ -66,9 +94,11 @@ deploying machine, or ask Kajal).
   (`owner.ts`), duplicate-deal merge (`dedupe.ts`), and 30-day stale
   flagging (`stale.ts`), all run outside the AI call so they're predictable.
 - **Shared access gate** (`src/app/login/` + `src/middleware.ts`) - one
-  admin password for all four users (v1 access decision), with an "acting
-  as" name picker so the audit trail still shows a real person instead of
-  "admin."
+  admin password for all four users (v1 access decision), with an
+  "Assigned to" name picker (persisted per browser) so the audit trail still
+  shows a real person instead of "admin" - inline pickers also appear
+  wherever an action is disabled for not having picked one yet, instead of
+  forcing a trip back to the toolbar.
 - **Confirmation popups everywhere** - every button that changes data
   (approve/reject, sign out, generate a brief, log a quick capture, add/
   remove a digest recipient, toggle automatic sending) pops a small "are you
@@ -189,7 +219,7 @@ account itself signed up with.
   The "attach to a specific deal" dropdown in quick capture sidesteps this
   entirely when the match matters.
 - **No per-user accounts** - one shared password, matching the v1 access
-  decision. The "acting as" / "Logged by" pickers are how the audit trail
+  decision. The "Assigned to" / "Logged by" pickers are how the audit trail
   still gets a real name.
 - **FR-11 (reply-to-digest updates)** shares the same extraction pipeline as
   everything else but isn't wired to a live inbox - a founder's reply would
