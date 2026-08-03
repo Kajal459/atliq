@@ -21,10 +21,6 @@ export default function LoginPage({
               <br />
               before it <span className="font-serif italic">goes cold</span>
             </h1>
-            <p className="mt-5 max-w-sm text-gray-600">
-              Shared access for Dhaval, Bhavin, Karandeep, and Jay - every signal captured, cited, and waiting for
-              approval.
-            </p>
           </div>
 
           <div className="w-full max-w-sm rounded-2xl border border-cream-100 bg-white p-8 md:justify-self-end">
